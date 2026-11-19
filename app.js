@@ -5,6 +5,18 @@
 (function () {
   'use strict';
 
+  /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
+  var BUILD = '20261120O';
+  (function () {
+    try {
+      var stamp = document.body && document.body.getAttribute('data-build');
+      if (stamp && stamp !== BUILD && !sessionStorage.getItem('zbs.reloaded')) {
+        sessionStorage.setItem('zbs.reloaded', '1');
+        location.reload();
+      }
+    } catch (e) { /* 忽略 */ }
+  })();
+
   /* ---------------- 常量 ---------------- */
 
   var WD = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -1130,31 +1142,45 @@
   /* ---------------- 总渲染 ---------------- */
 
   function renderAll() {
-    renderGoals();
-    renderLegend();
-    renderSources();
-    renderDayStrip();
-    renderAgenda();
-    renderTodo();
-    renderRejected();
-    renderProfile();
-    renderPick('course');
-    renderPick('volunteer');
-    renderPick('run');
-    renderSettle();
-    renderHistory('course');
-    renderHistory('volunteer');
-    renderStats();
-    renderBg();
-    renderAccount();
-    renderThemeSeg();
-    renderHero();
-    renderFeatureGrid();
-    renderMarquee();
-    renderHomeTodo();
-    renderPosts();
-    renderTerm();
-    renderDayNote();
+    // 每块单独兜住：一个渲染器出错，不能把整页拖空
+    var steps = [
+      ['renderGoals', function () { renderGoals(); }],
+      ['renderLegend', function () { renderLegend(); }],
+      ['renderSources', function () { renderSources(); }],
+      ['renderDayStrip', function () { renderDayStrip(); }],
+      ['renderAgenda', function () { renderAgenda(); }],
+      ['renderTodo', function () { renderTodo(); }],
+      ['renderRejected', function () { renderRejected(); }],
+      ['renderProfile', function () { renderProfile(); }],
+      ['renderPick:course', function () { renderPick('course'); }],
+      ['renderPick:volunteer', function () { renderPick('volunteer'); }],
+      ['renderPick:run', function () { renderPick('run'); }],
+      ['renderSettle', function () { renderSettle(); }],
+      ['renderHistory:course', function () { renderHistory('course'); }],
+      ['renderHistory:volunteer', function () { renderHistory('volunteer'); }],
+      ['renderStats', function () { renderStats(); }],
+      ['renderBg', function () { renderBg(); }],
+      ['renderAccount', function () { renderAccount(); }],
+      ['renderThemeSeg', function () { renderThemeSeg(); }],
+      ['renderHero', function () { renderHero(); }],
+      ['renderFeatureGrid', function () { renderFeatureGrid(); }],
+      ['renderMarquee', function () { renderMarquee(); }],
+      ['renderHomeTodo', function () { renderHomeTodo(); }],
+      ['renderPosts', function () { renderPosts(); }],
+      ['renderTerm', function () { renderTerm(); }],
+      ['renderDayNote', function () { renderDayNote(); }],
+      ['renderHistSum', function () { renderHistSum(); }]
+    ];
+
+    for (var i = 0; i < steps.length; i++) {
+      try {
+        steps[i][1]();
+      } catch (err) {
+        if (window.console && console.error) {
+          console.error('[撞不上] ' + steps[i][0] + ' 渲染失败：', err);
+        }
+      }
+    }
   }
 
   function regenerate() {
