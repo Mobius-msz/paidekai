@@ -1873,15 +1873,33 @@
     return (d.getMonth() + 1) + '/' + d.getDate();
   }
 
-  function downloadBlob(blob, name) {
-    var url = URL.createObjectURL(blob);
+  // 触发下载：链接留在 DOM 里一个 tick 再删，某些浏览器删太快会取消下载
+  function downloadUrl(url, name) {
     var link = document.createElement('a');
     link.href = url;
     link.download = name;
+    link.rel = 'noopener';
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 6000);
+    setTimeout(function () {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1200);
+  }
+
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    downloadUrl(url, name);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
+  }
+
+  // dataURL -> Uint8Array
+  function dataUrlToBytes(dataUrl) {
+    var i = dataUrl.indexOf(',');
+    var bin = atob(dataUrl.slice(i + 1));
+    var out = new Uint8Array(bin.length);
+    for (var k = 0; k < bin.length; k++) out[k] = bin.charCodeAt(k);
+    return out;
   }
 
   // 把一周的课表画成一张图（固定浅色，方便打印和贴进 PPT）
@@ -2051,10 +2069,10 @@
   function exportSchedulePng() {
     if (!state.schedule.length && !state.courses.length) { toast('还没有排任何东西'); return; }
     var cv = drawScheduleCanvas();
-    cv.toBlob(function (blob) {
-      downloadBlob(blob, '撞不上-课表-' + exportStamp() + '.png');
-      toast('图片已保存');
-    }, 'image/png');
+    // 同步取值再点击，保住用户手势，浏览器不会拦
+    var url = cv.toDataURL('image/png');
+    downloadUrl(url, '撞不上-课表-' + exportStamp() + '.png');
+    toast('图片已保存到下载文件夹');
   }
 
   // 最小 PDF：把 JPEG 原样塞进去，不依赖任何库
@@ -2110,14 +2128,12 @@
   function exportSchedulePdf() {
     if (!state.schedule.length && !state.courses.length) { toast('还没有排任何东西'); return; }
     var cv = drawScheduleCanvas();
-    cv.toBlob(function (blob) {
-      blob.arrayBuffer().then(function (buf) {
-        var pdf = pdfFromJpeg(new Uint8Array(buf), cv.width, cv.height);
-        downloadBlob(new Blob([pdf], { type: 'application/pdf' }),
-                     '撞不上-课表-' + exportStamp() + '.pdf');
-        toast('PDF 已保存');
-      });
-    }, 'image/jpeg', 0.93);
+    var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
+    var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
+    var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+    downloadUrl(url, '撞不上-课表-' + exportStamp() + '.pdf');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
+    toast('PDF 已保存到下载文件夹');
   }
 
   // 当天的日程画成一张单页
@@ -2301,22 +2317,19 @@
 
   function exportDayPng() {
     var cv = drawDayCanvas();
-    cv.toBlob(function (blob) {
-      downloadBlob(blob, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png');
-      toast('图片已保存');
-    }, 'image/png');
+    var url = cv.toDataURL('image/png');
+    downloadUrl(url, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png');
+    toast('图片已保存到下载文件夹');
   }
 
   function exportDayPdf() {
     var cv = drawDayCanvas();
-    cv.toBlob(function (blob) {
-      blob.arrayBuffer().then(function (buf) {
-        var pdf = pdfFromJpeg(new Uint8Array(buf), cv.width, cv.height);
-        downloadBlob(new Blob([pdf], { type: 'application/pdf' }),
-                     '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf');
-        toast('PDF 已保存');
-      });
-    }, 'image/jpeg', 0.93);
+    var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
+    var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
+    var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+    downloadUrl(url, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
+    toast('PDF 已保存到下载文件夹');
   }
 
   var exportMode = 'week';
@@ -2422,13 +2435,8 @@
 
     var blob = new Blob([buildIcs()], { type: 'text/calendar;charset=utf-8' });
     var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = '排得开日程.ics';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    downloadUrl(url, '撞不上日程.ics');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
 
     toast('已导出 ' + state.schedule.length + ' 个日程，可导入钉钉日历');
   }
