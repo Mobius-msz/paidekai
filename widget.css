@@ -2,13 +2,13 @@
 
 :root {
   color-scheme: light;
-  --bg: #F7F9FD;
-  --surface: #FFFFFF;
-  --surface-2: #FBFCFE;
+  --bg: #EEF1F7;
+  --surface: #FBFBFD;
+  --surface-2: #F4F6FA;
   --ink: #131829;
   --ink-2: #454E63;
   --muted: #8B94A8;
-  --line: #E7EAF3;
+  --line: #E1E5EF;
   --brand: #4F46E5;
   --brand-ink: #3B34C4;
   --accent: #06B6D4;
