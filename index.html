@@ -80,10 +80,11 @@
       <span class="hero-dot"></span>在线 · <span id="heroTerm">第 12 周</span>
     </div>
     <h1 class="hero-title">撞不上</h1>
-    <p class="hero-sub">课表 · 二课 · 作业 · 跑操，一条都不打架</p>
+    <p class="hero-sub">「这个东西都在哪看？」「这个作业什么时候结束？」「讲座会不会撞课程？」</p>
     <p class="hero-desc">
-      课表在钉钉，二课在素拓平台，作业散在课程群，校园跑在小程序。<br>
-      四套系统，各管一摊 —— 没有一个人替你算它们撞不撞。这个网页就干这一件事。
+      你一定在大学里听过、也问过这几句话 —— 课表在这儿，作业七零八落，<br>
+      校园跑飞到哪去不知道，活动多得不知从何入手。<br>
+      各种事项把脑子搅成一锅粥。这个网站想用最直白、最不绕弯子的办法，让你避开这些麻烦 ^_^
     </p>
     <div class="hero-act">
       <button class="btn primary lg" type="button" data-page="day">进入日程 →</button>
@@ -502,19 +503,9 @@
 
       <section class="card panel-card">
         <h2 class="card-title">我有课</h2>
-        <p class="card-sub">点亮的格子会显示在日程里，也一定会避开</p>
+        <p class="card-sub">选中的格子会出现在日程里，排班时一定会避开</p>
         <div class="busy-grid" id="busyGrid"></div>
         <button class="link-btn block-link" id="btnImportTable" type="button">从课表批量导入 →</button>
-      </section>
-
-      <section class="card panel-card">
-        <h2 class="card-title">排班口味</h2>
-        <label class="field wide">
-          <span>每天最多</span>
-          <input type="range" id="maxPerDay" min="1" max="5" step="1" value="3">
-          <em><b id="maxPerDayVal">3</b> 场</em>
-        </label>
-        <button class="btn primary block" id="btnGenerate" type="button">重新排一遍</button>
       </section>
 
     </div>

@@ -249,7 +249,8 @@
       title: String(title || '').trim(),
       course: String(course || '').trim(),
       due: due ? new Date(due) : null,
-      done: false
+      done: false,
+      fav: false
     };
     if (!t.title) return null;
     state.tasks.push(t);
@@ -1094,8 +1095,10 @@
     });
     document.getElementById('busyGrid').innerHTML = html;
 
-    document.getElementById('maxPerDay').value = state.maxPerDay;
-    document.getElementById('maxPerDayVal').textContent = state.maxPerDay;
+    var mp = document.getElementById('maxPerDay');
+    if (mp) mp.value = state.maxPerDay;
+    var mpv = document.getElementById('maxPerDayVal');
+    if (mpv) mpv.textContent = state.maxPerDay;
     document.getElementById('goalCredit').value = state.goals.credit;
     document.getElementById('goalVolunteer').value = state.goals.volunteer;
     document.getElementById('goalRun').value = state.goals.run;
@@ -1450,7 +1453,7 @@
     var runPct = state.run.target > 0 ? clamp(state.run.done / state.run.target * 100, 0, 100) : 0;
     var perWeek = runPerWeek();
     var runFoot = left > 0
-      ? '还差 <b>' + left + '</b> 次 · 剩 ' + state.run.weeksLeft + ' 周 · 每周约 <b>' +
+      ? '还差 <b>' + left + '</b> 天 · 剩 ' + state.run.weeksLeft + ' 周 · 每周约 <b>' +
         (Math.round(perWeek * 10) / 10) + '</b> 次'
       : '<span class="hot">已达标 ' + state.run.done + ' 次，满分到手</span>';
 
@@ -1504,7 +1507,7 @@
       value: busyN, unit: '/ 21 时段',
       bar: busyPct,
       foot: state.courses.length
-        ? '已排 <b>' + state.courses.length + '</b> 门课 · 会显示在「今天」里，排班也一定避开'
+        ? '已排 <b>' + state.courses.length + '</b> 门课 · 会显示在「日程」里，排班也一定避开'
         : '点亮的格子会显示在日程里，排班时也会避开',
       synced: state.sources.dingtalk.synced,
       tag: state.courses.length ? ('已排 ' + state.courses.length + ' 门') : '待导入',
@@ -1532,7 +1535,7 @@
         '</b> km。<span class="good">不用再安排跑步了。</span>';
     } else {
       box.innerHTML =
-        '还差 <span class="warn">' + left + ' 次</span> · 剩余 ' + weeks + ' 周 · ' +
+        '还差 <span class="warn">' + left + ' 天</span> · 剩余 ' + weeks + ' 周 · ' +
         '每周至少要跑 <b>' + (Math.round(perWeek * 10) / 10) + '</b> 次<br>' +
         '累计里程 <b>' + km + '</b> km。点击下方按钮会把「本周计划跑」设成 <b>' +
         Math.ceil(perWeek) + '</b> 次，排程会自动给你留出跑步时间。';
@@ -3887,7 +3890,7 @@
     }
 
     if (!all.length) {
-      el.innerHTML = '<div class="ag-empty">还没有记录。活动结束后回「今天」结算，就会记在这里。</div>';
+      el.innerHTML = '<div class="ag-empty">还没有记录。活动结束后回「日程」结算，就会记在这里。</div>';
       return;
     }
 
@@ -4124,13 +4127,16 @@
     var todo = state.tasks.filter(function (t) { return !t.done; });
 
     var stats = [
-      { v: state.schedule.length, k: '本周已排', u: '件' },
-      { v: state.courses.length, k: '课程', u: '门' },
-      { v: todo.length, k: '待办作业', u: '项' },
-      { v: pending.length, k: '待结算', u: '场' }
+      { v: state.schedule.length, k: '本周已排', u: '件', go: 'day', tip: '看日程' },
+      { v: state.courses.length, k: '课程', u: '门', go: 'data', tip: '看课表' },
+      { v: todo.length, k: '待办作业', u: '项', go: 'day', tip: '看清单' },
+      { v: pending.length, k: '待结算', u: '场', go: 'day', tip: '去结算' }
     ];
     box.innerHTML = stats.map(function (s) {
-      return '<div class="hstat"><b>' + s.v + '</b><span>' + s.k + '</span><em>' + s.u + '</em></div>';
+      return '<button class="hstat" type="button" data-page="' + s.go + '" title="' + s.tip + '">' +
+               '<b>' + s.v + '</b><span>' + s.k + '</span><em>' + s.u + '</em>' +
+               '<i class="hstat-go">→</i>' +
+             '</button>';
     }).join('');
   }
 
@@ -4169,15 +4175,76 @@
     track.innerHTML = one + one;
   }
 
+  function exportBackup() {
+    persist();
+    var payload = { app: 'zhuangbushang', ver: 1, exportedAt: new Date().toISOString(), store: store };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = '撞不上-备份-' + ymd(new Date()) + '.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+    toast('备份已下载，拿去另一个浏览器导入');
+  }
+
+  function importBackupFile(file) {
+    if (!file) return;
+    file.text().then(function (txt) {
+      var obj = JSON.parse(txt);
+      if (!obj || obj.app !== 'zhuangbushang' || !obj.store || !obj.store.users || !obj.store.users.length) {
+        throw new Error('这不是撞不上的备份文件');
+      }
+      store = obj.store;
+      if (!store.current || !(store.data || {})[store.current]) {
+        store.current = store.users[0].id;
+      }
+      var d = (store.data || {})[store.current];
+      seedDemo();
+      if (d) applySnapshot(d);
+      persist();
+      hideGate();
+      refreshAll();
+      gotoPage(state.page || 'home');
+      toast('已恢复 ' + store.users.length + ' 个档案');
+    }).catch(function (e) {
+      toast((e && e.message) ? e.message : '这个文件读不了');
+    });
+  }
+
+  function pickBackupFile() {
+    var inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'application/json,.json';
+    inp.onchange = function () {
+      var f = this.files && this.files[0];
+      if (f) importBackupFile(f);
+    };
+    inp.click();
+  }
+
+  function toggleTaskFav(id) {
+    state.tasks.forEach(function (t) {
+      if (t.id === id) t.fav = !t.fav;
+    });
+    renderHomeTodo();
+    saveSoon();
+  }
+
   function renderHomeTodo() {
     var el = document.getElementById('homeTodo');
     if (!el) return;
 
-    var list = state.tasks.filter(function (t) { return !t.done; }).slice().sort(function (a, b) {
-      if (!a.due) return 1;
-      if (!b.due) return -1;
-      return new Date(a.due) - new Date(b.due);
-    }).slice(0, 4);
+    var all = state.tasks.filter(function (t) { return !t.done; }).slice();
+    all.sort(function (p, q) {
+      if (!!q.fav !== !!p.fav) return q.fav ? 1 : -1;      // 收藏的排最前
+      if (!p.due) return 1;
+      if (!q.due) return -1;
+      return new Date(p.due) - new Date(q.due);
+    });
+    var list = all.slice(0, 4);
 
     if (!list.length) {
       el.innerHTML = '<div class="ag-empty">清单是空的 —— 去「日程」页导入一份作业。</div>';
@@ -4186,14 +4253,19 @@
 
     el.innerHTML = list.map(function (t) {
       var info = dueInfo(t);
-      return '<button class="htodo" type="button" data-page="day">' +
+      return '<div class="htodo' + (t.fav ? ' is-fav' : '') + '">' +
+               '<button class="htodo-star' + (t.fav ? ' on' : '') + '" type="button"' +
+                 ' data-fav="' + t.id + '" aria-pressed="' + (t.fav ? 'true' : 'false') + '"' +
+                 ' title="' + (t.fav ? '取消收藏' : '收藏，排到最前面') + '">' +
+                 (t.fav ? '★' : '☆') +
+               '</button>' +
                '<span class="htodo-dot ' + info.kind + '"></span>' +
-               '<span class="htodo-main">' +
+               '<button class="htodo-main" type="button" data-page="day">' +
                  '<span class="htodo-title">' + esc(t.title) + '</span>' +
                  '<span class="htodo-meta">' + esc(t.course || '未归课') + '</span>' +
-               '</span>' +
+               '</button>' +
                '<span class="htodo-when ' + info.kind + '">' + esc(info.label) + '</span>' +
-             '</button>';
+             '</div>';
     }).join('');
   }
 
@@ -4236,7 +4308,7 @@
       { p: '议程下面还有两行小提示：这天有没有早八、空档有多长、空档能塞进什么。' },
 
       { h: '七、结束之后记一笔' },
-      { p: '活动结束时间一过，它自动掉进「今天」的待结算。点「去了」或「没去」，记录就进了「我的历史」，出勤率和累计学分跟着变。' },
+      { p: '活动结束时间一过，它自动掉进「日程」页的待结算。点「去了」或「没去」，记录就进了「我的历史」，出勤率和累计学分跟着变。' },
       { p: '不记会怎样？不会怎么样，只是那些数字永远停在 0。' },
 
       { h: '八、换颜色、换壁纸、换档案' },
@@ -4537,7 +4609,8 @@
         return {
           id: t.id, title: t.title, course: t.course,
           due: t.due ? new Date(t.due).getTime() : null,
-          done: !!t.done
+          done: !!t.done,
+          fav: !!t.fav
         };
       }),
       maxPerDay: state.maxPerDay,
@@ -4577,7 +4650,8 @@
         return {
           id: t.id, title: t.title, course: t.course,
           due: t.due ? new Date(t.due) : null,
-          done: !!t.done
+          done: !!t.done,
+          fav: !!t.fav
         };
       });
     }
@@ -4826,15 +4900,20 @@
         '</div>' +
       '</div>' +
       '<div class="ac-foot">' +
-        '<span class="muted">档案只存在这台电脑的浏览器里，不上传、不需要密码</span>' +
-        '<button class="link-btn" type="button" data-ac="reset">重置为演示数据</button>' +
+        '<span class="muted">换浏览器 / 换电脑：导出备份，在新浏览器导入即可复原</span>' +
+        '<div class="ac-foot-act">' +
+          '<button class="btn ghost sm" type="button" data-ac="export">导出备份</button>' +
+          '<button class="btn ghost sm" type="button" data-ac="import">导入备份</button>' +
+          '<button class="link-btn" type="button" data-ac="reset">重置</button>' +
+        '</div>' +
       '</div>';
   }
 
   /* ---------------- 事件绑定 ---------------- */
 
   function bind() {
-    document.getElementById('btnGenerate').addEventListener('click', function () {
+    var bg = document.getElementById('btnGenerate');
+    if (bg) bg.addEventListener('click', function () {
       regenerate();
       toast('已重新排程');
     });
@@ -5007,7 +5086,8 @@
     });
 
     // 每日上限
-    document.getElementById('maxPerDay').addEventListener('input', function () {
+    var mpIn = document.getElementById('maxPerDay');
+    if (mpIn) mpIn.addEventListener('input', function () {
       state.maxPerDay = parseInt(this.value, 10);
       document.getElementById('maxPerDayVal').textContent = state.maxPerDay;
       regenerate();
@@ -5169,6 +5249,15 @@
     var cfCancel = document.getElementById('cfCancel');
     if (cfCancel) cfCancel.addEventListener('click', closeConfirm);
 
+    /* ---- 收藏 ---- */
+    document.addEventListener('click', function (ev) {
+      var s = ev.target.closest('[data-fav]');
+      if (!s) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleTaskFav(s.getAttribute('data-fav'));
+    });
+
     /* ---- 文章 ---- */
     document.addEventListener('click', function (ev) {
       var a = ev.target.closest('[data-article]');
@@ -5269,7 +5358,9 @@
         var b = ev.target.closest('[data-ac]');
         if (!b) return;
         var k = b.getAttribute('data-ac');
-        if (k === 'avatar') openAvatarEditor();
+        if (k === 'export') exportBackup();
+        else if (k === 'import') pickBackupFile();
+        else if (k === 'avatar') openAvatarEditor();
         else if (k === 'switch') showGate('pick');
         else if (k === 'new') showGate('new');
         else if (k === 'reset') {

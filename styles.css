@@ -3,6 +3,7 @@
    ============================================================ */
 
 :root {
+  color-scheme: light;
   --bg: #F5F7FC;
   --surface: #FFFFFF;
   --surface-2: #FBFCFE;
@@ -448,8 +449,13 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .cell:hover { border-color: var(--line-strong); }
 .cell[aria-pressed="true"] {
-  background: repeating-linear-gradient(45deg, var(--hatch-1), var(--hatch-1) 3px, var(--hatch-2) 3px, var(--hatch-2) 6px);
-  border-color: var(--line-strong);
+  background: var(--mini-on-bg);
+  border-color: var(--mini-on-line);
+  box-shadow: 0 7px 16px -8px rgba(79, 70, 229, .75), 0 1px 0 rgba(255, 255, 255, .5) inset;
+  transform: translateY(-1px);
+}
+html[data-theme="dark"] .cell[aria-pressed="true"] {
+  box-shadow: 0 7px 18px -8px rgba(0, 0, 0, .9), 0 0 0 1px var(--mini-on-line) inset;
 }
 
 /* ---------------- 图例 ---------------- */
@@ -1775,4 +1781,69 @@ html[data-theme="dark"] .seg button.on {
 
 @media (max-width: 760px) {
   .sitegrid { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+}
+
+/* ---------------- 首页统计：可点 ---------------- */
+.hstat {
+  width: 100%;
+  font-family: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.hstat:hover {
+  border-color: var(--line-brand);
+  background: var(--surface);
+  transform: translateY(-2px);
+}
+.hstat:active { transform: translateY(0); }
+.hstat-go {
+  position: absolute; right: 13px; top: 12px;
+  font-style: normal; font-size: 12px; color: var(--brand);
+  opacity: 0; transform: translateX(-3px);
+  transition: opacity .15s ease, transform .15s ease;
+}
+.hstat:hover .hstat-go { opacity: 1; transform: translateX(0); }
+
+/* ---------------- 待办：收藏星 ---------------- */
+.htodo {
+  display: grid;
+  grid-template-columns: 22px 8px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px 10px 8px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: border-color .15s ease, background .15s ease;
+}
+.htodo:hover { border-color: var(--line-brand); background: var(--surface); }
+.htodo.is-fav {
+  border-color: var(--line-warm);
+  background: var(--tint-warn);
+}
+.htodo-star {
+  width: 22px; height: 22px;
+  border: none; background: none; padding: 0;
+  font-size: 15px; line-height: 1;
+  color: var(--muted); cursor: pointer;
+  transition: color .14s ease, transform .14s ease;
+}
+.htodo-star:hover { transform: scale(1.18); color: var(--warn); }
+.htodo-star.on { color: #F5B301; text-shadow: 0 0 10px rgba(245, 179, 1, .45); }
+.htodo-main {
+  display: block; min-width: 0; text-align: left;
+  border: none; background: none; padding: 0;
+  font-family: inherit; cursor: pointer;
+}
+.htodo-main:hover .htodo-title { color: var(--brand); }
+
+/* ---------------- 账号卡：导出 / 导入 ---------------- */
+.ac-foot-act { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .htodo { grid-template-columns: 22px 8px minmax(0, 1fr); }
+  .htodo-when { grid-column: 3; justify-self: start; margin-top: 2px; }
 }
