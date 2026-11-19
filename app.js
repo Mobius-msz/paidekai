@@ -2120,12 +2120,235 @@
     }, 'image/jpeg', 0.93);
   }
 
-  function openExport() {
+  // 当天的日程画成一张单页
+  function drawDayCanvas() {
+    var d = state.activeDay;
+    var S = 2;
+    var W = 1200;
+    var items = [];
+
+    state.courses.forEach(function (cs) {
+      if (cs.d === d) items.push({ s: cs.start, e: cs.end, title: cs.title, sub: cs.place, kind: 'course' });
+    });
+    state.schedule.forEach(function (e) {
+      if (e.d !== d) return;
+      var ty = TYPES[e.type] || TYPES.lecture;
+      items.push({
+        s: e.start, e: e.end, title: e.title,
+        sub: (e.runKm > 0 ? '校园跑 · 07:00–21:00 任选' : (e.place || '')),
+        kind: 'act', color: ty.color, bg: ty.bg, label: ty.label
+      });
+    });
+    items.sort(function (p, q) { return toMin(p.s) - toMin(q.s); });
+
+    var HEAD = 196, ROW = 94, GAPROW = 40, FOOT = 74, PAD = 64;
+    var bodyH = 0;
+    if (items.length) {
+      bodyH = items.length * ROW;
+      for (var k = 0; k < items.length - 1; k++) {
+        if (toMin(items[k + 1].s) - toMin(items[k].e) >= 45) bodyH += GAPROW;
+      }
+    } else {
+      bodyH = 240;
+    }
+    var H = HEAD + bodyH + FOOT;
+
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(W * S / 2);
+    cv.height = Math.round(H * S / 2);
+    var g = cv.getContext('2d');
+    g.scale(S / 2, S / 2);
+
+    g.fillStyle = '#FFFFFF';
+    g.fillRect(0, 0, W, H);
+
+    var dt = addDays(state.weekStart, d);
+    var wk = weekOf(dt);
+    var totalMin = items.reduce(function (sum, it) { return sum + (toMin(it.e) - toMin(it.s)); }, 0);
+
+    // 头部
+    g.fillStyle = '#131829';
+    g.font = '800 40px "Microsoft YaHei", "PingFang SC", sans-serif';
+    g.fillText(WD[d] + '的日程', PAD, 84);
+
+    g.fillStyle = '#8B94A8';
+    g.font = '600 20px "Microsoft YaHei", sans-serif';
+    g.fillText((wk ? '第 ' + wk + ' 周 · ' : '') + fmtMD(dt) + ' · ' +
+               (items.length ? items.length + ' 件事 · 共 ' + Math.round(totalMin / 60 * 10) / 10 + ' 小时' : '没有安排'),
+               PAD, 120);
+
+    g.textAlign = 'right';
+    g.fillStyle = '#B9C1D2';
+    g.font = '600 16px "Microsoft YaHei", sans-serif';
+    g.fillText('撞不上 · 校园日程排班器', W - PAD, 84);
+    g.fillText('mobius-msz.github.io/zhuangbushang', W - PAD, 112);
+    g.textAlign = 'left';
+
+    g.strokeStyle = '#E7EAF3';
+    g.beginPath();
+    g.moveTo(PAD, 150);
+    g.lineTo(W - PAD, 150);
+    g.stroke();
+
+    function roundRect(x, y, w, hh, r) {
+      var rr = Math.min(r, w / 2, hh / 2);
+      g.beginPath();
+      g.moveTo(x + rr, y);
+      g.arcTo(x + w, y, x + w, y + hh, rr);
+      g.arcTo(x + w, y + hh, x, y + hh, rr);
+      g.arcTo(x, y + hh, x, y, rr);
+      g.arcTo(x, y, x + w, y, rr);
+      g.closePath();
+    }
+
+    function fit(str, maxW) {
+      if (g.measureText(str).width <= maxW) return str;
+      var s = str;
+      while (s.length > 1 && g.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+      return s + '…';
+    }
+
+    // 空状态
+    if (!items.length) {
+      g.fillStyle = '#C3C9DA';
+      g.font = '600 24px "Microsoft YaHei", sans-serif';
+      g.textAlign = 'center';
+      g.fillText('这天没有安排 —— 去二课、志愿、跑操页挑几场吧', W / 2, HEAD + 120);
+      g.textAlign = 'left';
+    }
+
+    var y = HEAD + 22;
+    items.forEach(function (it, idx) {
+      var barX = PAD + 168;
+
+      // 时间
+      g.fillStyle = '#131829';
+      g.font = '800 24px "Microsoft YaHei", sans-serif';
+      g.textAlign = 'right';
+      g.fillText(it.s, PAD + 132, y + 30);
+      g.fillStyle = '#A9B2C4';
+      g.font = '600 16px "Microsoft YaHei", sans-serif';
+      g.fillText(it.e, PAD + 132, y + 54);
+      g.textAlign = 'left';
+
+      // 卡片
+      var isCourse = (it.kind === 'course');
+      roundRect(barX, y, W - PAD - barX, ROW - 14, 10);
+      g.fillStyle = isCourse ? '#F1F3F9' : (it.bg || '#EEF1FE');
+      g.fill();
+
+      g.fillStyle = isCourse ? '#C3CADD' : (it.color || '#4C5CE0');
+      g.fillRect(barX, y, 5, ROW - 14);
+
+      // 类型标签
+      var tag = isCourse ? '课' : (it.label || '活动');
+      g.font = '700 14px "Microsoft YaHei", sans-serif';
+      var tw = g.measureText(tag).width + 20;
+      roundRect(barX + 18, y + 14, tw, 26, 6);
+      g.fillStyle = 'rgba(255,255,255,.75)';
+      g.fill();
+      g.fillStyle = isCourse ? '#5A647C' : (it.color || '#4C5CE0');
+      g.fillText(tag, barX + 28, y + 32);
+
+      // 标题
+      g.fillStyle = isCourse ? '#39415A' : '#1B2033';
+      g.font = '800 25px "Microsoft YaHei", sans-serif';
+      g.fillText(fit(it.title, W - PAD - barX - 60), barX + 18 + tw + 14, y + 36);
+
+      // 副信息
+      var dur = toMin(it.e) - toMin(it.s);
+      var bits = [];
+      if (it.sub) bits.push(it.sub);
+      bits.push(Math.floor(dur / 60) + (dur % 60 ? ' 小时 ' + (dur % 60) + ' 分' : ' 小时'));
+      g.fillStyle = 'rgba(100, 110, 132, .9)';
+      g.font = '600 16px "Microsoft YaHei", sans-serif';
+      g.fillText(fit(bits.join(' · '), W - PAD - barX - 40), barX + 18, y + 62);
+
+      y += ROW;
+
+      // 空档
+      if (idx < items.length - 1) {
+        var gap = toMin(items[idx + 1].s) - toMin(it.e);
+        if (gap >= 45) {
+          g.strokeStyle = '#EDF0F7';
+          g.setLineDash([6, 6]);
+          g.beginPath();
+          g.moveTo(barX, y + GAPROW / 2);
+          g.lineTo(W - PAD, y + GAPROW / 2);
+          g.stroke();
+          g.setLineDash([]);
+
+          g.fillStyle = '#B9C1D2';
+          g.font = '600 15px "Microsoft YaHei", sans-serif';
+          g.textAlign = 'center';
+          g.fillText('空档 ' + gap + ' 分钟', barX + (W - PAD - barX) / 2, y + GAPROW / 2 - 8);
+          g.textAlign = 'left';
+          y += GAPROW;
+        }
+      }
+    });
+
+    // 页脚
+    g.fillStyle = '#B9C1D2';
+    g.font = '600 15px "Microsoft YaHei", sans-serif';
+    g.fillText('撞不上 · 校园日程排班器', PAD, H - 26);
+    g.textAlign = 'right';
+    g.fillText('导出于 ' + new Date().toLocaleString('zh-CN', { hour12: false }), W - PAD, H - 26);
+    g.textAlign = 'left';
+
+    return cv;
+  }
+
+  function exportDayPng() {
+    var cv = drawDayCanvas();
+    cv.toBlob(function (blob) {
+      downloadBlob(blob, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png');
+      toast('图片已保存');
+    }, 'image/png');
+  }
+
+  function exportDayPdf() {
+    var cv = drawDayCanvas();
+    cv.toBlob(function (blob) {
+      blob.arrayBuffer().then(function (buf) {
+        var pdf = pdfFromJpeg(new Uint8Array(buf), cv.width, cv.height);
+        downloadBlob(new Blob([pdf], { type: 'application/pdf' }),
+                     '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf');
+        toast('PDF 已保存');
+      });
+    }, 'image/jpeg', 0.93);
+  }
+
+  var exportMode = 'week';
+
+  function openExport(mode) {
+    exportMode = (mode === 'day') ? 'day' : 'week';
+    var t = document.getElementById('exportTitle');
+    var s = document.getElementById('exportSub');
+    var ics = document.querySelector('#modalExport [data-exp="ics"]');
+    var grid = document.querySelector('#modalExport .exp-grid');
+
+    if (exportMode === 'day') {
+      t.textContent = '导出' + WD[state.activeDay] + '的日程';
+      s.textContent = '只导出当天的安排，一页纸';
+      if (ics) ics.hidden = true;
+      grid.classList.add('two');
+    } else {
+      t.textContent = '导出这一周的课表';
+      s.textContent = '三种格式，看你要拿去干什么';
+      if (ics) ics.hidden = false;
+      grid.classList.remove('two');
+    }
     document.getElementById('modalExport').hidden = false;
   }
 
   function runExport(kind) {
     document.getElementById('modalExport').hidden = true;
+    if (exportMode === 'day') {
+      if (kind === 'png') exportDayPng();
+      else if (kind === 'pdf') exportDayPdf();
+      return;
+    }
     if (kind === 'png') exportSchedulePng();
     else if (kind === 'pdf') exportSchedulePdf();
     else if (kind === 'ics') downloadIcs();
@@ -5547,6 +5770,11 @@
     var cfCancel = document.getElementById('cfCancel');
     if (cfCancel) cfCancel.addEventListener('click', closeConfirm);
 
+    var btnExportDay = document.getElementById('btnExportDay');
+    if (btnExportDay) {
+      btnExportDay.addEventListener('click', function () { openExport('day'); });
+    }
+
     /* ---- 导出课表 ---- */
     document.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-exp]');
@@ -5884,7 +6112,8 @@
         persist: persist, snapshot: snapshot, seedDemo: seedDemo,
         avatarFromFile: avatarFromFile, openAvatarEditor: openAvatarEditor, gateSubmit: gateSubmit,
         applyTheme: applyTheme, currentTheme: currentTheme,
-        openExport: openExport, drawScheduleCanvas: drawScheduleCanvas, pdfFromJpeg: pdfFromJpeg
+        openExport: openExport, drawScheduleCanvas: drawScheduleCanvas, pdfFromJpeg: pdfFromJpeg,
+        drawDayCanvas: drawDayCanvas
       };
     }
   }

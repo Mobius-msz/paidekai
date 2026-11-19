@@ -1911,3 +1911,12 @@ html[data-theme="dark"] .ghstar.on {
   .td .ghstar { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 4px; }
   .htodo { grid-template-columns: auto 8px minmax(0, 1fr); }
 }
+
+/* 导出的入口链接 */
+.day-export {
+  display: block;
+  margin: 2px 0 0 2px;
+  font-size: 11.5px;
+}
+.exp[hidden] { display: none; }
+.exp-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }

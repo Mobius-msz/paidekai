@@ -219,6 +219,7 @@
     <div class="daystrip" id="daystrip"></div>
     <div class="agenda" id="agenda"></div>
     <div class="daynote" id="dayNote"></div>
+    <button class="link-btn day-export" type="button" id="btnExportDay">导出这天（图片 / PDF）→</button>
   </section>
 
   <section class="card todo-card">
@@ -559,8 +560,8 @@
   <div class="modal-card export-card" role="dialog" aria-modal="true">
     <div class="modal-head">
       <div>
-        <h3>导出这一周的课表</h3>
-        <p class="card-sub">三种格式，看你要拿去干什么</p>
+        <h3 id="exportTitle">导出这一周的课表</h3>
+        <p class="card-sub" id="exportSub">三种格式，看你要拿去干什么</p>
       </div>
       <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
     </div>
