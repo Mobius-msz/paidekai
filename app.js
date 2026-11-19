@@ -126,8 +126,8 @@
     rejected: [],
     lastIds: {},
 
-    // 校园跑学期数据（来自微信小程序「运动时间bank」的手动同步）
-    run: { done: 12, target: 27, km: 36, weeksLeft: 9 },
+    // 阳光乐跑学期数据（来自微信小程序「运动时间bank」的手动同步）
+    run: { done: 12, target: 27, km: 36, weeksLeft: 9, len: 30 },
 
     // 三个数据源的接入状态：mode 表示走的是哪种适配器
     sources: {
@@ -331,7 +331,7 @@
     /* 周一 */
     { d: 0, s: '14:00', e: '15:30', title: '通识讲座 · AIGC 与设计未来', type: 'lecture', place: '第一教学楼 101',
       credit: 0.2, capacity: 200, enrolled: 186, dlH: 6, tags: ['学术讲座', '技术编程'], org: '数字媒体学院' },
-    { d: 0, s: '19:00', e: '19:45', title: '校园跑 · 冬季夜跑（第 1 次）', type: 'sports', place: '东田径场',
+    { d: 0, s: '19:00', e: '19:45', title: '阳光乐跑', type: 'sports', place: '东田径场',
       runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
     { d: 0, s: '19:00', e: '21:00', title: '机器人社 · 招新宣讲会', type: 'art', place: '大学生活动中心 201',
       credit: 0.2, capacity: 120, enrolled: 117, dlH: 20, tags: ['文体艺术', '技术编程'], org: '学生社团联合会' },
@@ -355,7 +355,7 @@
       volunteerHours: 2, capacity: 20, enrolled: 14, dlH: 10, tags: ['志愿服务'], org: '图书馆' },
     { d: 2, s: '18:30', e: '20:30', title: '分享会 · 无障碍设计怎么做', type: 'lecture', place: '第三教学楼 108',
       credit: 0.2, capacity: 100, enrolled: 43, dlH: 40, tags: ['学术讲座', '文体艺术'], org: '工业设计系' },
-    { d: 2, s: '20:45', e: '21:30', title: '校园跑 · 夜跑（第 2 次）', type: 'sports', place: '东田径场',
+    { d: 2, s: '20:45', e: '21:30', title: '阳光乐跑', type: 'sports', place: '东田径场',
       runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
 
     /* 周四 */
@@ -365,7 +365,7 @@
       credit: 0.25, capacity: 150, enrolled: 132, dlH: 5, tags: ['创新创业'], org: '校团委' },
     { d: 3, s: '19:00', e: '21:00', title: 'AI 编程实战训练营', type: 'practice', place: '第三教学楼 401',
       credit: 0.3, capacity: 50, enrolled: 50, dlH: 22, tags: ['技术编程'], org: '学生科技协会' },
-    { d: 3, s: '20:30', e: '21:30', title: '校园跑 · 夜跑（第 3 次）', type: 'sports', place: '东田径场',
+    { d: 3, s: '20:30', e: '21:30', title: '阳光乐跑', type: 'sports', place: '东田径场',
       runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
 
     /* 周五 */
@@ -375,7 +375,7 @@
       credit: 0.15, capacity: 120, enrolled: 70, dlH: 44, tags: ['学术讲座', '创新创业'], org: '理学院' },
     { d: 4, s: '19:00', e: '20:30', title: '「非遗进校园」杭绣手作体验', type: 'art', place: '艺术楼 203',
       credit: 0.3, capacity: 40, enrolled: 38, dlH: 3, tags: ['文体艺术'], org: '艺术教育中心' },
-    { d: 4, s: '20:00', e: '21:00', title: '校园跑 · 夜跑（第 4 次）', type: 'sports', place: '东田径场',
+    { d: 4, s: '20:00', e: '21:00', title: '阳光乐跑', type: 'sports', place: '东田径场',
       runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
 
     /* 周六 */
@@ -395,7 +395,13 @@
       credit: 0.4, capacity: 80, enrolled: 45, dlH: 36, tags: ['创新创业', '技术编程'], org: '创业学院' },
     { d: 6, s: '15:00', e: '16:30', title: '简历门诊（周日场）', type: 'career', place: '就业指导中心 202',
       credit: 0.1, capacity: 40, enrolled: 9, dlH: 34, tags: ['职业发展'], org: '就业指导中心' },
-    { d: 6, s: '18:00', e: '18:45', title: '校园跑 · 夜跑（第 5 次）', type: 'sports', place: '东田径场',
+    { d: 6, s: '18:00', e: '18:45', title: '阳光乐跑', type: 'sports', place: '东田径场',
+      runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
+
+    /* 周二、周六也开放 —— 乐跑 7:00–21:00 每天都能跑 */
+    { d: 1, s: '20:00', e: '20:45', title: '阳光乐跑', type: 'sports', place: '东田径场',
+      runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' },
+    { d: 5, s: '10:00', e: '10:45', title: '阳光乐跑', type: 'sports', place: '西区副馆南侧跑道',
       runKm: 3, capacity: null, enrolled: 0, dlH: 48, tags: ['体育运动'], org: '体育教学部' }
   ];
 
@@ -645,10 +651,15 @@
     return { ids: selected.map(function (e) { return e.id; }) };
   }
 
-  // 弹性活动（校园跑）在 07:00–21:00 里找一个空档塞进去
+  // 弹性活动（阳光乐跑）在 07:00–21:00 里找一个空档塞进去
   var FLEX_FROM = 420;    // 07:00
   var FLEX_TO = 1260;     // 21:00
-  var FLEX_LEN = 45;
+
+  // 每次乐跑占多久，用户自己定（含路上时间），默认 30 分钟
+  function runLen() {
+    var n = state.run && state.run.len;
+    return (n >= 15 && n <= 120) ? n : 30;
+  }
 
   function freeSlot(d, selected, dur) {
     var blocks = [];
@@ -699,9 +710,9 @@
       var why = isOpen(e);
       if (why) { rejected.push({ e: e, why: why }); return; }
 
-      // 校园跑：07:00–21:00 之间找空档，不占用固定时间
+      // 阳光乐跑：07:00–21:00 之间找空档，不占用固定时间
       if (e.flex) {
-        var slot = freeSlot(e.d, selected, FLEX_LEN);
+        var slot = freeSlot(e.d, selected, runLen());
         if (!slot) { rejected.push({ e: e, why: 'noroom' }); return; }
         selected.push(copyEvent(e, slot));
         return;
@@ -746,9 +757,9 @@
     var closed = isOpen(e);
     if (closed) return { kind: closed };
 
-    // 校园跑是弹性的：只要 07:00–21:00 还塞得下就行
+    // 阳光乐跑是弹性的：只要 07:00–21:00 还塞得下就行
     if (e.flex) {
-      return freeSlot(e.d, state.schedule, FLEX_LEN) ? null : { kind: 'dense' };
+      return freeSlot(e.d, state.schedule, runLen()) ? null : { kind: 'dense' };
     }
 
     if (busyHit(e)) return { kind: 'busy' };
@@ -993,7 +1004,7 @@
 
     if (e.credit > 0) rs.push('补二课学分 <b>' + fmt1(e.credit) + '</b>');
     if (e.volunteerHours > 0) rs.push('补志愿时长 <b>' + fmt0(e.volunteerHours) + 'h</b>');
-    if (e.runKm > 0) rs.push('计入校园跑 <b>' + fmt1(e.runKm) + 'km</b>');
+    if (e.runKm > 0) rs.push('计入阳光乐跑 <b>' + fmt1(e.runKm) + 'km</b>');
 
     var hits = e.tags.filter(function (t) { return state.interests.indexOf(t) !== -1; });
     if (hits.length) rs.push('命中兴趣「<b>' + hits.join('、') + '</b>」');
@@ -1448,7 +1459,7 @@
     var el = document.getElementById('sources');
     if (!el) return;
 
-    /* ① 校园跑 */
+    /* ① 阳光乐跑 */
     var left = runLeft();
     var runPct = state.run.target > 0 ? clamp(state.run.done / state.run.target * 100, 0, 100) : 0;
     var perWeek = runPerWeek();
@@ -1482,7 +1493,7 @@
     var html = '';
 
     html += srcCard({
-      name: '校园跑', sub: '运动时间bank',
+      name: '阳光乐跑', sub: '运动时间bank',
       value: state.run.done, unit: '/ ' + state.run.target + ' 次',
       bar: runPct, full: left <= 0,
       foot: runFoot,
@@ -1518,7 +1529,7 @@
     el.innerHTML = html;
   }
 
-  /* ---------------- 校园跑：同步与联动 ---------------- */
+  /* ---------------- 阳光乐跑：同步与联动 ---------------- */
 
   function renderRunPreview() {
     var done = parseInt(document.getElementById('runDone').value, 10) || 0;
@@ -1916,7 +1927,7 @@
     var bodyTop = HEAD;
     var bodyH = H - HEAD - FOOT;
     var colW = (W - PAD * 2 - GUT) / 7;
-    var T0 = 420, T1 = 1320;         // 07:00 – 22:00（校园跑最早 7 点）
+    var T0 = 420, T1 = 1320;         // 07:00 – 22:00（阳光乐跑最早 7 点）
 
     function yOf(t) { return bodyTop + (t - T0) / (T1 - T0) * bodyH; }
 
@@ -2044,7 +2055,7 @@
     // 活动
     state.schedule.forEach(function (e) {
       var ty = TYPES[e.type] || TYPES.lecture;
-      block(e.d, e.start, e.end, e.title, (e.runKm > 0 ? '校园跑 · 任意时段' : (e.place || '')),
+      block(e.d, e.start, e.end, e.title, (e.runKm > 0 ? '07:00–21:00 任选' : (e.place || '')),
             ty.bg, ty.color, '#1B2033');
     });
 
@@ -2198,7 +2209,7 @@
       var ty = TYPES[e.type] || TYPES.lecture;
       items.push({
         s: e.start, e: e.end, title: e.title,
-        sub: (e.runKm > 0 ? '校园跑 · 07:00–21:00 任选' : (e.place || '')),
+        sub: (e.runKm > 0 ? '07:00–21:00 任选' : (e.place || '')),
         kind: 'act', color: ty.color, bg: ty.bg, label: ty.label
       });
     });
@@ -2276,7 +2287,7 @@
       g.fillStyle = '#C3C9DA';
       g.font = '600 24px "Microsoft YaHei", sans-serif';
       g.textAlign = 'center';
-      g.fillText('这天没有安排 —— 去二课、志愿、跑操页挑几场吧', W / 2, HEAD + 120);
+      g.fillText('这天没有安排 —— 去二课、志愿、乐跑页挑几场吧', W / 2, HEAD + 120);
       g.textAlign = 'left';
     }
 
@@ -2457,7 +2468,7 @@
       var bits = [];
       if (e.credit > 0) bits.push('二课学分 ' + fmt1(e.credit));
       if (e.volunteerHours > 0) bits.push('志愿时长 ' + fmt0(e.volunteerHours) + ' 小时');
-      if (e.runKm > 0) bits.push('校园跑 ' + fmt1(e.runKm) + ' km');
+      if (e.runKm > 0) bits.push('阳光乐跑 ' + fmt1(e.runKm) + ' km');
       if (e.tags.length) bits.push('标签：' + e.tags.join('、'));
 
       L.push('BEGIN:VEVENT');
@@ -4059,7 +4070,7 @@
       match: function (e) { return e.volunteerHours > 0; }
     },
     run: {
-      label: '校园跑',
+      label: '阳光乐跑',
       match: function (e) { return e.runKm > 0; }
     }
   };
@@ -4281,7 +4292,7 @@
     state.events.forEach(function (x) { if (x.id === id) e = x; });
     if (!e) return;
 
-    // 校园跑是弹性的，不会和谁重叠
+    // 阳光乐跑是弹性的，不会和谁重叠
     var st = e.flex ? null : pickStatus(e);
     if (st && (st.kind === 'time' || st.kind === 'travel')) {
       askReplace(e, st.other);
@@ -4869,7 +4880,7 @@
       { p: '不用任何 Key 的那条是第二条。实测一张杭电助手的课表截图，六门课全部对上，跨节次的课会自动拆成上午 + 下午。' },
 
       { h: '三、告诉它你想攒什么' },
-      { p: '数据页中间的「我要凑够」：二课学分、志愿时长、本周校园跑。按你实际的进度填。' },
+      { p: '数据页中间的「我要凑够」：二课学分、志愿时长、本周阳光乐跑。按你实际的进度填。' },
       { p: '填完推荐会立刻变 —— 因为它按「还差多少」给每一场活动打分。这就是为什么改目标比改别的都管用。' },
 
       { h: '四、做五道题（可选，但建议做）' },
@@ -4877,7 +4888,7 @@
       { p: '答完生成画像，占推荐分 22%，比「缺口匹配」还高。理由很简单：缺口可以算，兴趣可以猜，但「我到底想去什么样的活动」只能问。' },
 
       { h: '五、开始勾选' },
-      { p: '二课 / 志愿 / 跑操三个页面，每一条都带着推荐分、推荐理由和当前冲突状态。' },
+      { p: '二课 / 志愿 / 阳光乐跑三个页面，每一条都带着推荐分、推荐理由和当前冲突状态。' },
       { p: '勾一个会撞课的，整行会抖一下，并且明确告诉你撞上了谁、差多少。' },
       { p: '「按推荐勾上」只是帮你批量点一次，勾完仍然可以一条条取消。系统没有替你决定任何事。' },
 
@@ -5206,6 +5217,7 @@
   }
 
   function applySnapshot(d) {
+    if (d && d.run && !(d.run.len >= 15 && d.run.len <= 120)) d.run.len = 30;
     if (!d) return;
 
     if (d.goals) state.goals = d.goals;
@@ -5828,6 +5840,21 @@
     var cfCancel = document.getElementById('cfCancel');
     if (cfCancel) cfCancel.addEventListener('click', closeConfirm);
 
+    var rl = document.getElementById('runLen');
+    if (rl) {
+      rl.value = runLen();
+      rl.addEventListener('change', function () {
+        var v = parseInt(this.value, 10);
+        if (!(v >= 15 && v <= 120)) v = 30;
+        this.value = v;
+        state.run.len = v;
+        rebuild();
+        refreshAll();
+        saveSoon();
+        toast('每次乐跑按 ' + v + ' 分钟排');
+      });
+    }
+
     var btnExportDay = document.getElementById('btnExportDay');
     if (btnExportDay) {
       btnExportDay.addEventListener('click', function () { openExport('day'); });
@@ -6119,7 +6146,7 @@
     seedRecord('校园歌手大赛 · 复赛', 'art', -4, '19:00', '21:00', 0.2, 0, 'missed');
     seedRecord('「AI＋公益」志愿者培训', 'volunteer', -2, '12:30', '13:30', 0, 1, 'done');
     seedRecord('「挑战杯」竞赛宣讲会（上一场）', 'competition', -1, '18:30', '20:00', 0.25, 0, 'pending');
-    seedRecord('校园跑 · 第 1 次', 'sports', -1, '19:00', '19:45', 0, 0, 'pending');
+    seedRecord('阳光乐跑', 'sports', -1, '19:00', '19:45', 0, 0, 'pending');
 
     // 演示数据铺好后，默认把推荐项勾上
     scoreAll();

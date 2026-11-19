@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>撞不上 · 课表 / 二课 / 作业，一条都不打架</title>
-<meta name="description" content="把课表、二课活动、作业截止和校园跑，排进同一张不冲突的日程。">
+<meta name="description" content="把课表、二课活动、作业截止和阳光乐跑，排进同一张不冲突的日程。">
 <script>
   // 先于样式生效，避免刷新时闪一下白
   (function () {
@@ -20,7 +20,7 @@
     }
   })();
 </script>
-<link rel="stylesheet" href="styles.css?v=20261120d">
+<link rel="stylesheet" href="styles.css?v=20261120e">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -42,7 +42,7 @@
     <div class="mark" aria-hidden="true"><span></span><span></span></div>
     <div class="brand-text">
       <h1>撞不上</h1>
-      <p>课表 · 二课 · 作业 · 跑操</p>
+      <p>课表 · 二课 · 作业 · 乐跑</p>
     </div>
   </div>
 
@@ -51,7 +51,7 @@
     <button class="nv" type="button" data-page="day">日程</button>
     <button class="nv" type="button" data-page="course">二课</button>
     <button class="nv" type="button" data-page="volunteer">志愿</button>
-    <button class="nv" type="button" data-page="run">跑操</button>
+    <button class="nv" type="button" data-page="run">阳光乐跑</button>
     <button class="nv" type="button" data-page="data">数据</button>
     <button class="nv" type="button" data-page="me">我的</button>
   </nav>
@@ -83,7 +83,7 @@
     <p class="hero-sub">「这个东西都在哪看？」「这个作业什么时候结束？」「讲座会不会撞课程？」</p>
     <p class="hero-desc">
       你一定在大学里听过、也问过这几句话 —— 课表在这儿，作业七零八落，<br>
-      校园跑飞到哪去不知道，活动多得不知从何入手。<br>
+      阳光乐跑飞到哪去不知道，活动多得不知从何入手。<br>
       各种事项把脑子搅成一锅粥。这个网站想用最直白、最不绕弯子的办法，让你避开这些麻烦 ^_^
     </p>
     <div class="hero-act">
@@ -310,13 +310,19 @@
   </details>
 </main>
 
-<!-- ==================== 跑操 ==================== -->
+<!-- ==================== 阳光乐跑 ==================== -->
 <main class="page" id="page-run" hidden>
   <section class="card">
     <div class="card-head">
       <div>
-        <h2 class="card-title">校园跑</h2>
+        <h2 class="card-title">阳光乐跑</h2>
         <p class="card-sub" id="runStat">一周跑几次，你自己定</p>
+        <div class="run-len">
+          <span>每次用时</span>
+          <input type="number" id="runLen" min="15" max="120" step="5" value="30" inputmode="numeric" aria-label="每次乐跑用时">
+          <span>分钟</span>
+          <em>含去操场的路上时间</em>
+        </div>
       </div>
       <div class="seg" id="seg-run">
         <button type="button" data-pickmode="edit">编辑活动</button>
@@ -427,7 +433,7 @@
       </thead>
       <tbody>
         <tr>
-          <td>校园跑<br><em>微信「运动时间bank」</em></td>
+          <td>阳光乐跑<br><em>微信「运动时间bank」</em></td>
           <td>实时次数与满分缺口</td>
           <td><b>手动同步</b>：填次数和满分线，自动算出每周该跑几次</td>
           <td>小程序无对外接口；抓包要装证书和代理，属逆向，号有被封风险</td>
@@ -455,7 +461,7 @@
       这也是产品化必须的：数据源随时会变，排程引擎不该跟着重写。
     </p>
     <p class="foot-note">
-      <b>数据说明：</b>活动池是演示用的模拟数据（28 条，覆盖讲座、志愿服务、校园跑、竞赛、文体、职业发展六类），
+      <b>数据说明：</b>活动池是演示用的模拟数据（28 条，覆盖讲座、志愿服务、阳光乐跑、竞赛、文体、职业发展六类），
       时间按「下一个自然周」动态生成，方便随时演示。地点间转场耗时按校区区域粗略估算（同区 8 分钟、跨区 14–32 分钟），
       不是真实导航数据。
     </p>
@@ -489,7 +495,7 @@
             <em>小时</em>
           </label>
           <label class="field">
-            <span>本周跑操</span>
+            <span>本周乐跑</span>
             <input type="number" id="goalRun" min="0" max="7" step="1" value="2">
             <em>天</em>
           </label>
@@ -831,13 +837,13 @@
   </div>
 </div>
 
-<!-- 弹窗：校园跑同步 -->
+<!-- 弹窗：阳光乐跑同步 -->
 <div class="modal" id="modalRun" hidden>
   <div class="modal-mask" data-close></div>
   <div class="modal-card" role="dialog" aria-modal="true">
     <div class="modal-head">
       <div>
-        <h3>同步跑操数据</h3>
+        <h3>同步乐跑数据</h3>
         <p class="card-sub">打开微信「运动时间bank」，照着首页数字填一遍</p>
       </div>
       <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
@@ -858,7 +864,7 @@
 
     <div class="pr-conf">
       <button class="btn primary" type="button" id="btnRunApply">存下，顺便改本周目标</button>
-      <span class="hint">会把「本周跑操」目标调成刚好跑满的次数</span>
+      <span class="hint">会把「本周乐跑」目标调成刚好跑满的次数</span>
     </div>
   </div>
 </div>
@@ -920,7 +926,7 @@
       <div class="mark" aria-hidden="true"><span></span><span></span></div>
       <div>
         <h1>撞不上</h1>
-        <p>课表 · 二课 · 作业 · 跑操</p>
+        <p>课表 · 二课 · 作业 · 乐跑</p>
       </div>
     </div>
 
@@ -955,6 +961,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120d"></script>
+<script src="app.js?v=20261120e"></script>
 </body>
 </html>

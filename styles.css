@@ -1934,3 +1934,17 @@ html[data-theme="dark"] .ghstar.on {
 .result-plain { color: var(--muted); font-size: 12px; padding: 40px 10px; }
 .result-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .result-act .btn { text-decoration: none; }
+
+/* 乐跑：每次用时设置 */
+.run-len {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 9px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap;
+}
+.run-len input {
+  width: 60px; padding: 4px 9px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface-2);
+  font-family: inherit; font-size: 12px; font-weight: 800; color: var(--ink);
+  text-align: center;
+}
+.run-len input:focus { outline: none; border-color: var(--line-brand); }
+.run-len em { font-style: normal; opacity: .8; }
