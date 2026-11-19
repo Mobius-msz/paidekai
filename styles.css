@@ -1878,3 +1878,36 @@ html[data-theme="dark"] .seg button.on {
   .exp-tag { margin-bottom: 0; }
   .exp em { display: none; }
 }
+
+/* ---------------- GitHub 风 Star 按钮 ---------------- */
+.ghstar {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: inherit; font-size: 10.5px; font-weight: 700;
+  line-height: 1.5; white-space: nowrap; cursor: pointer;
+  transition: border-color .14s ease, background .14s ease, color .14s ease;
+}
+.ghstar svg { width: 12px; height: 12px; display: block; flex: 0 0 auto; }
+.ghstar:hover { border-color: var(--line-brand); color: var(--ink); background: var(--surface-2); }
+.ghstar.on {
+  border-color: #E3B341; color: #A9761A;
+  background: rgba(245, 179, 1, .10);
+}
+.ghstar.on:hover { border-color: #D9A520; background: rgba(245, 179, 1, .16); }
+html[data-theme="dark"] .ghstar.on {
+  border-color: #6B5420; color: #F5B301;
+  background: rgba(245, 179, 1, .12);
+}
+
+/* 作业清单的列多一列星标 */
+.td { grid-template-columns: 22px minmax(0, 1fr) auto auto; }
+.htodo { grid-template-columns: auto 8px minmax(0, 1fr) auto; }
+
+@media (max-width: 640px) {
+  .td { grid-template-columns: 22px minmax(0, 1fr) auto; }
+  .td .ghstar { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 4px; }
+  .htodo { grid-template-columns: auto 8px minmax(0, 1fr); }
+}
