@@ -1,0 +1,160 @@
+/* 撞不上 · 桌面挂件（独立样式，不依赖主站 CSS） */
+
+:root {
+  color-scheme: light;
+  --bg: #F7F9FD;
+  --surface: #FFFFFF;
+  --surface-2: #FBFCFE;
+  --ink: #131829;
+  --ink-2: #454E63;
+  --muted: #8B94A8;
+  --line: #E7EAF3;
+  --brand: #4F46E5;
+  --brand-ink: #3B34C4;
+  --accent: #06B6D4;
+  --ok: #0E9C7C;
+  --ok-ink: #0E8C72;
+  --warn: #E08700;
+  --warn-ink: #B4660C;
+  --danger: #E5484D;
+  --danger-ink: #C0392B;
+  --chip: #F2F2F5;
+  --tint-brand: #EEF1FE;
+  --tint-warn: #FFF6E0;
+  --tint-ok: #E8F7F1;
+  --tint-danger: #FDECEA;
+  --sh: 0 1px 2px rgba(19, 24, 41, .05), 0 14px 34px -24px rgba(19, 24, 41, .34);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0F1219;
+  --surface: #161A23;
+  --surface-2: #1B2029;
+  --ink: #E9EDF6;
+  --ink-2: #B9C1D2;
+  --muted: #8B94A8;
+  --line: #262C39;
+  --brand: #7C8BFF;
+  --brand-ink: #AEB8FF;
+  --accent: #38D6F0;
+  --ok: #35C79C;
+  --ok-ink: #5FDDB6;
+  --warn: #F0A93B;
+  --warn-ink: #F3BE72;
+  --danger: #FF6B70;
+  --danger-ink: #FF9A9E;
+  --chip: #222936;
+  --tint-brand: #1E2440;
+  --tint-warn: #2E2411;
+  --tint-ok: #103027;
+  --tint-danger: #2F1A1A;
+  --sh: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 38px -24px rgba(0, 0, 0, .85);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.wg { display: flex; flex-direction: column; min-height: 100vh; padding: 14px 14px 10px; gap: 12px; }
+
+/* ---- 头部 ---- */
+.wg-head { display: flex; align-items: center; gap: 9px; }
+.wg-mark {
+  width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
+  background: linear-gradient(140deg, var(--brand) 0%, #7B72F5 46%, var(--accent) 100%);
+  box-shadow: 0 6px 14px -8px rgba(79, 70, 229, .8);
+}
+.wg-name { font-size: 13.5px; font-weight: 800; letter-spacing: -.02em; }
+.wg-week {
+  margin-left: auto; font-size: 10px; font-weight: 800;
+  color: var(--brand-ink); background: var(--tint-brand);
+  padding: 2px 8px; border-radius: 6px;
+}
+
+/* ---- 下一件 ---- */
+.wg-next {
+  padding: 12px 13px; border-radius: 13px;
+  background: var(--surface); border: 1px solid var(--line);
+  box-shadow: var(--sh);
+}
+.wg-next-lab { font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
+.wg-next-time {
+  font-size: 22px; font-weight: 800; letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums; margin-top: 3px; line-height: 1.1;
+}
+.wg-next-time b { color: var(--brand); }
+.wg-next-title { font-size: 13px; font-weight: 700; margin-top: 3px; line-height: 1.4; }
+.wg-next-meta { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.wg-next-empty { font-size: 12px; color: var(--muted); padding: 6px 0; }
+
+/* ---- 待办 ---- */
+.wg-todo-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10.5px; font-weight: 800; color: var(--muted);
+  letter-spacing: .05em; padding: 0 2px;
+}
+.wg-todo-head a { color: var(--brand-ink); text-decoration: none; font-size: 10.5px; }
+.wg-todo-head a:hover { text-decoration: underline; }
+
+.wg-todo { display: flex; flex-direction: column; gap: 6px; }
+.wg-item {
+  display: grid; grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 9px; align-items: center;
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.wg-item.is-fav { background: var(--tint-warn); border-color: rgba(224, 135, 0, .35); }
+.wg-star { font-size: 12px; line-height: 1; color: var(--muted); }
+.wg-star.on { color: #F5B301; }
+.wg-main { min-width: 0; }
+.wg-title {
+  display: block; font-size: 12px; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wg-sub { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+.wg-when {
+  font-size: 9.5px; font-weight: 800; white-space: nowrap;
+  padding: 2px 7px; border-radius: 5px;
+  background: var(--chip); color: var(--muted);
+}
+.wg-when.overdue { background: var(--tint-danger); color: var(--danger-ink); }
+.wg-when.urgent { background: var(--tint-warn); color: var(--warn-ink); }
+.wg-when.soon { background: var(--tint-brand); color: var(--brand-ink); }
+
+/* ---- 底部数字 ---- */
+.wg-stats {
+  margin-top: auto;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+  padding-top: 4px;
+}
+.wg-stat {
+  text-align: center; padding: 7px 4px; border-radius: 9px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.wg-stat b {
+  display: block; font-size: 16px; font-weight: 800;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.wg-stat span { font-size: 9.5px; color: var(--muted); }
+
+/* ---- 空状态 ---- */
+.wg-empty {
+  text-align: center; padding: 40px 16px; color: var(--muted); font-size: 12px;
+  line-height: 1.8;
+}
+.wg-empty a { color: var(--brand); font-weight: 700; text-decoration: none; }
+
+.wg-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 9.5px; color: var(--muted); padding: 0 2px;
+}
+.wg-foot a { color: var(--muted); text-decoration: none; }
+.wg-foot a:hover { color: var(--brand); }

@@ -4175,6 +4175,21 @@
     track.innerHTML = one + one;
   }
 
+  function openWidget() {
+    var w = 340;
+    var h = 560;
+    var left = Math.max(20, (screen.availWidth || 1280) - w - 60);
+    var top = 90;
+    var feat = 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top +
+               ',menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes';
+    var win = window.open('widget.html', 'zhuangbushang-widget', feat);
+    if (!win) {
+      toast('浏览器拦了这个弹窗，允许后再试');
+    } else {
+      toast('挂件开好了 —— 钉在桌面上就能一直看');
+    }
+  }
+
   function exportBackup() {
     persist();
     var payload = { app: 'zhuangbushang', ver: 1, exportedAt: new Date().toISOString(), store: store };
@@ -4904,6 +4919,7 @@
         '<div class="ac-foot-act">' +
           '<button class="btn ghost sm" type="button" data-ac="export">导出备份</button>' +
           '<button class="btn ghost sm" type="button" data-ac="import">导入备份</button>' +
+          '<button class="btn ghost sm" type="button" data-ac="widget">桌面挂件</button>' +
           '<button class="link-btn" type="button" data-ac="reset">重置</button>' +
         '</div>' +
       '</div>';
@@ -5360,6 +5376,7 @@
         var k = b.getAttribute('data-ac');
         if (k === 'export') exportBackup();
         else if (k === 'import') pickBackupFile();
+        else if (k === 'widget') openWidget();
         else if (k === 'avatar') openAvatarEditor();
         else if (k === 'switch') showGate('pick');
         else if (k === 'new') showGate('new');
