@@ -1733,9 +1733,43 @@
     document.getElementById('btnBatchAdd').addEventListener('click', addBatch);
   }
 
+  // AI 返回的 JSON → 一段段「通知」文本，交给原来的解析器
+  function jsonToBlocks(text) {
+    var s = String(text || '').trim();
+    if (!s) return null;
+    s = s.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '');
+    var i0 = s.indexOf('{'), i1 = s.lastIndexOf('}');
+    if (i0 < 0 || i1 <= i0) return null;
+
+    var obj;
+    try { obj = JSON.parse(s.slice(i0, i1 + 1)); } catch (e) { return null; }
+
+    var arr = obj.items || obj.activities || obj.list || obj.events;
+    if (!Array.isArray(arr) || !arr.length) return null;
+
+    return arr.map(function (it) {
+      var title = it.title || it.name || it['名称'] || it['活动'] || '未命名活动';
+      var hours = Number(it.hours || it['时长'] || 0) || 0;
+      var credit = Number(it.credit || it['学分'] || 0) || 0;
+      var kind = hours > 0 ? '志愿' : '讲座';
+
+      var lines = ['【' + kind + '】' + title];
+      var day = it.day || it['日期'] || it.date || '';
+      var st = it.start || it['开始'] || '';
+      var en = it.end || it['结束'] || '';
+      if (day || st) lines.push('时间：' + [day, st + (en ? '-' + en : '')].filter(Boolean).join(' ').trim());
+      var place = it.place || it['地点'] || '';
+      if (place) lines.push('地点：' + place);
+      if (credit) lines.push('二课学分：' + credit);
+      if (hours) lines.push('志愿时长：' + hours + ' 小时');
+      return lines.join('\n');
+    });
+  }
+
   function parseBatch() {
     var txt = document.getElementById('batchText').value;
-    var blocks = splitActivities(txt);
+    // 优先按 AI 返回的 JSON 解析，失败再退回文本切分
+    var blocks = jsonToBlocks(txt) || splitActivities(txt);
 
     batchDrafts = blocks.map(function (b) {
       var r = parseNotice(b);
@@ -3835,7 +3869,23 @@
     '3. 一条记录一个对象，不要合并\n' +
     '4. 看不清或换算不出来的，credit 和 hours 都填 0，**不要编造数字**';
 
+  var VOL_PROMPT =
+    '你是志愿服务信息提取助手。我会给你「志愿汇」或「青春杭电」的志愿岗位列表截图（或复制的文字）。\n' +
+    '请整理成下面的 JSON，**只输出 JSON，不要任何解释和 markdown 代码块**：\n' +
+    '\n' +
+    '{"items":[{"title":"图书馆书目整理","day":"周二","start":"14:00","end":"16:00","place":"图书馆 三层","hours":2,"credit":0}]}\n' +
+    '\n' +
+    '规则：\n' +
+    '1. day 只能是 周一 到 周日\n' +
+    '2. start、end 用 24 小时制 HH:MM\n' +
+    '3. hours 是志愿时长（单位：小时），必须填；没写明就按 end 减 start 算\n' +
+    '4. credit 一律填 0 —— 志愿活动不算二课学分\n' +
+    '5. 只提取还能报名的岗位；看不清的字段填空字符串，**不要编造**\n' +
+    '6. 一个岗位一条，不要合并';
+
   var PROMPTS = {
+    volunteer: VOL_PROMPT,
+
     timetable:
       '你是课程表信息提取助手。我会给你一张大学课程表的截图（或粘贴的文字）。\n' +
       '请把它整理成下面的 JSON，**只输出 JSON，不要任何解释和 markdown 代码块**：\n' +
@@ -3901,13 +3951,36 @@
   }
 
   function switchPane(pane) {
+    var show = (pane === 'volunteer') ? 'activities' : pane;
+
     document.querySelectorAll('#impTabs .itab').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-pane') === pane);
     });
     ['timetable', 'activities', 'tasks'].forEach(function (k) {
       var el = document.getElementById('pane-' + k);
-      if (el) el.hidden = (k !== pane);
+      if (el) el.hidden = (k !== show);
     });
+
+    // 志愿活动和二课活动共用一块面板，只换提示词和说明
+    var isVol = (pane === 'volunteer');
+    var cp = document.querySelector('#pane-activities [data-copy]');
+    var pk = document.querySelector('#pane-activities [data-peek]');
+    if (cp) cp.setAttribute('data-copy', isVol ? 'volunteer' : 'activities');
+    if (pk) pk.setAttribute('data-peek', isVol ? 'volunteer' : 'activities');
+
+    var hint = document.querySelector('#pane-activities .step-body span');
+    if (hint) {
+      hint.textContent = isVol
+        ? '把「志愿汇 / 青春杭电」的岗位列表截图一起发过去'
+        : '把「正在报名」那页截图一起发过去';
+    }
+    var step2 = document.querySelectorAll('#pane-activities .step-body span')[1];
+    if (step2) {
+      step2.textContent = isVol
+        ? '每行「志愿时长：X 小时」会自动识别；粘 AI 的 JSON 也行'
+        : '用空行分隔每条，或者直接粘 AI 返回的 JSON';
+    }
+
     state.impPane = pane;
   }
 
