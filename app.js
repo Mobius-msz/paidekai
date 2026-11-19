@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120O';
+  var BUILD = '20261120P';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -141,6 +141,7 @@
     // 阳光乐跑学期数据（来自微信小程序「运动时间bank」的手动同步）
     run: { done: 18, target: 21, km: 27, weeksLeft: 4, len: 30 },
     history: [],          // 导入的二课 / 志愿历史记录
+    mode: 'demo',         // demo = 铺样例数据；normal = 空白，全靠自己导入
 
     // 三个数据源的接入状态：mode 表示走的是哪种适配器
     sources: {
@@ -1169,7 +1170,8 @@
       ['renderPosts', function () { renderPosts(); }],
       ['renderTerm', function () { renderTerm(); }],
       ['renderDayNote', function () { renderDayNote(); }],
-      ['renderHistSum', function () { renderHistSum(); }]
+      ['renderHistSum', function () { renderHistSum(); }],
+      ['renderMode', function () { renderMode(); }]
     ];
 
     for (var i = 0; i < steps.length; i++) {
@@ -5047,7 +5049,7 @@
         store.current = store.users[0].id;
       }
       var d = (store.data || {})[store.current];
-      seedDemo();
+      seedData();
       if (d) applySnapshot(d);
       persist();
       hideGate();
@@ -5469,6 +5471,7 @@
       maxPerDay: state.maxPerDay,
       run: JSON.parse(JSON.stringify(state.run)),
       history: JSON.parse(JSON.stringify(state.history || [])),
+      mode: state.mode || 'demo',
       sources: JSON.parse(JSON.stringify(state.sources)),
       term: JSON.parse(JSON.stringify(state.term)),
       bg: bgOk ? JSON.parse(JSON.stringify(state.bg)) : { kind: 'default' },
@@ -5491,6 +5494,7 @@
     if (d.maxPerDay) state.maxPerDay = d.maxPerDay;
     if (d.run) state.run = d.run;
     if (d.history) state.history = d.history;
+    if (d.mode === 'demo' || d.mode === 'normal') state.mode = d.mode;
     if (d.sources) state.sources = d.sources;
     if (d.term) state.term = d.term;
     if (d.bg) state.bg = d.bg;
@@ -5499,7 +5503,8 @@
     if (d.busy) state.busy = d.busy.slice();
     if (d.courses) state.courses = d.courses;
     uid = 0;                                         // 重建前重置，保证 id 稳定
-    state.events = buildEvents();                    // 演示池永远用最新代码
+    // 演示模式下重建活动池；正常模式下池子是空的，只留用户自己导入的
+    state.events = (state.mode === 'demo') ? buildEvents() : [];
     if (d.events && d.events.length) {
       state.events = state.events.concat(d.events.map(restoreEvent));
     }
@@ -5677,7 +5682,7 @@
     store.users.push({ id: id, name: nm, av: gateCustom || AVATARS[gateAv], gender: gateGender, at: Date.now() });
     store.current = id;
 
-    seedDemo();          // 新档案：先铺一份演示例数据
+    seedData();          // 按当前模式铺数据
     persist();
     hideGate();
     refreshAll();
@@ -5722,7 +5727,7 @@
     store.current = id;
     var d = (store.data || {})[id];
 
-    seedDemo();
+    seedData();
     if (d) applySnapshot(d);
 
     persist();
@@ -5733,10 +5738,11 @@
 
   function resetProfile() {
     if (!store || !store.current) return;
-    seedDemo();
+    seedData();
     persist();
     refreshAll();
-    toast('已重置为演示数据');
+    renderMode();
+    toast(state.mode === 'demo' ? '已重置为演示数据' : '已清空');
   }
 
   function refreshAll() {
@@ -6140,6 +6146,11 @@
     var cfCancel = document.getElementById('cfCancel');
     if (cfCancel) cfCancel.addEventListener('click', closeConfirm);
 
+    var btnMode = document.getElementById('btnMode');
+    if (btnMode) btnMode.addEventListener('click', function () {
+      applyMode(state.mode === 'demo' ? 'normal' : 'demo');
+    });
+
     var btnHist = document.getElementById('btnHistory');
     if (btnHist) btnHist.addEventListener('click', openHistory);
 
@@ -6424,6 +6435,62 @@
 
   /* ---------------- 启动 ---------------- */
 
+  // 正常模式：什么都不铺，连活动池也是空的，全靠用户自己导入
+  function seedEmpty() {
+    state.courses = [];
+    state.busy = [];
+    state.events = [];
+    state.tasks = [];
+    state.records = [];
+    state.chosenIds = [];
+    state.history = [];
+
+    uid = 0;
+    taskSeq = 0;
+    recSeq = 0;
+
+    state.goals = JSON.parse(JSON.stringify(STATE_DEFAULTS.goals));
+    state.interests = STATE_DEFAULTS.interests.slice();
+    state.profile = JSON.parse(JSON.stringify(STATE_DEFAULTS.profile));
+    state.maxPerDay = STATE_DEFAULTS.maxPerDay;
+    state.run = { done: 0, target: 21, km: 0, weeksLeft: 4, len: 30 };
+    state.sources = JSON.parse(JSON.stringify(STATE_DEFAULTS.sources));
+    state.term = JSON.parse(JSON.stringify(STATE_DEFAULTS.term));
+    state.bg = { kind: 'default' };
+  }
+
+  // 按当前模式铺数据
+  function seedData() {
+    if (state.mode === 'demo') seedDemo();
+    else seedEmpty();
+  }
+
+  function renderMode() {
+    var b = document.getElementById('btnMode');
+    if (!b) return;
+    var demo = state.mode === 'demo';
+    b.textContent = demo ? '演示模式' : '正常模式';
+    b.classList.toggle('is-normal', !demo);
+    b.title = demo ? '当前是演示模式 —— 点一下切到正常模式（清空样例数据）'
+                   : '当前是正常模式 —— 点一下切回演示模式（重新铺样例数据）';
+  }
+
+  function applyMode(mode) {
+    if (mode === state.mode) return;
+    var toDemo = (mode === 'demo');
+    var msg = toDemo
+      ? '切回演示模式会重新铺一份样例数据，当前这个档案里的内容会被覆盖。继续？'
+      : '切到正常模式会清空这个档案里的演示数据（课表、作业、活动、结算记录），变成空白，之后靠你自己导入。继续？';
+    if (window.confirm && !window.confirm(msg)) return;
+
+    state.mode = mode;
+    seedData();
+    persist();
+    refreshAll();
+    gotoPage('home');
+    toast(toDemo ? '已切到演示模式' : '已切到正常模式 —— 去「数据」页导入你的课表');
+  }
+
   // 铺一份完整的演示数据（新建档案、重置档案都走这里）
   function seedDemo() {
     state.courses = [];
@@ -6481,7 +6548,7 @@
   function init() {
     loadVision();
 
-    seedDemo();
+    seedData();
 
     state.activeDay = 0;
     state.impPane = 'activities';

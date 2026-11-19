@@ -2004,3 +2004,12 @@ html[data-theme="dark"] .ghstar.on {
 .hist-ta:focus { outline: none; border-color: var(--line-brand); }
 .hist-act { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .hist-act .link-btn { margin-left: auto; font-size: 11px; }
+
+/* 模式开关 */
+.pill-demo { cursor: pointer; font-family: inherit; border: 1px solid transparent; }
+.pill-demo:hover { border-color: var(--line-warm); }
+.pill-demo.is-normal {
+  color: var(--muted);
+  background: var(--surface-2);
+  border-color: var(--line);
+}
