@@ -20,7 +20,7 @@
     }
   })();
 </script>
-<link rel="stylesheet" href="styles.css?v=20261120k">
+<link rel="stylesheet" href="styles.css?v=20261120L">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -500,6 +500,11 @@
             <em>天</em>
           </label>
         </div>
+
+        <div class="hist-row">
+          <span class="hist-sum" id="histSum">还没导入历史</span>
+          <button class="link-btn" type="button" id="btnHistory">导入二课 / 志愿历史 →</button>
+        </div>
       </section>
 
       <section class="card panel-card">
@@ -594,6 +599,40 @@
 </main>
 
 
+
+<!-- 弹窗：导入历史 -->
+<div class="modal" id="modalHistory" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card hist-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>导入二课 / 志愿历史</h3>
+        <p class="card-sub">把之前攒的学分和时长导进来，推荐就只补你真正缺的</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <ol class="hist-steps">
+      <li>打开素拓平台（二课）或志愿汇，把记录复制下来，截图也行</li>
+      <li>点下面的按钮复制提示词，和记录一起丢给 DeepSeek / 豆包 / Kimi</li>
+      <li>把它回的那段粘回下面这个框，点导入</li>
+    </ol>
+
+    <div class="hist-prompt-row">
+      <button class="btn ghost sm" type="button" id="btnHistPrompt">复制提示词</button>
+      <span class="muted">不需要任何 Key</span>
+    </div>
+
+    <textarea class="hist-ta" id="histText" rows="7"
+      placeholder='粘在这里。JSON 或直接贴文字都行，例如：&#10;{"history":[{"title":"图书馆志愿服务","date":"2024-11-05","credit":0,"hours":3}]}&#10;或者一行一条：&#10;2024-11-05 图书馆志愿服务 3 小时&#10;2024-10-12 通识讲座 0.2 分'></textarea>
+
+    <div class="hist-act">
+      <button class="btn primary" type="button" id="btnHistOk">导入</button>
+      <button class="btn ghost" type="button" data-close>取消</button>
+      <button class="link-btn" type="button" id="btnHistClear">清空已导入的历史</button>
+    </div>
+  </div>
+</div>
 
 <!-- 弹窗：导出结果 -->
 <div class="modal" id="modalResult" hidden>
@@ -968,6 +1007,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120k"></script>
+<script src="app.js?v=20261120L"></script>
 </body>
 </html>

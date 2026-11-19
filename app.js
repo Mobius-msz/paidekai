@@ -128,6 +128,7 @@
 
     // 阳光乐跑学期数据（来自微信小程序「运动时间bank」的手动同步）
     run: { done: 18, target: 21, km: 27, weeksLeft: 4, len: 30 },
+    history: [],          // 导入的二课 / 志愿历史记录
 
     // 三个数据源的接入状态：mode 表示走的是哪种适配器
     sources: {
@@ -564,10 +565,20 @@
 
   /* ---------------- 排程 ---------------- */
 
+  /* ---------------- 历史进度（导入的二课 / 志愿） ---------------- */
+  function histSum(kind) {
+    var sum = 0;
+    (state.history || []).forEach(function (x) {
+      sum += (kind === 'credit') ? (Number(x.credit) || 0) : (Number(x.hours) || 0);
+    });
+    return sum;
+  }
+
   function computeNeed() {
+    // 目标减掉已经导入的历史，就只剩真正要补的缺口
     return {
-      credit: state.goals.credit,
-      volunteer: state.goals.volunteer,
+      credit: Math.max(0, state.goals.credit - histSum('credit')),
+      volunteer: Math.max(0, state.goals.volunteer - histSum('volunteer')),
       run: state.goals.run
     };
   }
@@ -783,7 +794,8 @@
   var RING_C = 2 * Math.PI * RING_R;   // ≈113.1
 
   function renderGoals() {
-    var got = { credit: 0, volunteer: 0, run: 0 };
+    // 已得 = 导入的历史 + 本周已排
+    var got = { credit: histSum('credit'), volunteer: histSum('volunteer'), run: 0 };
     state.schedule.forEach(function (e) {
       got.credit += e.credit;
       got.volunteer += e.volunteerHours;
@@ -3810,6 +3822,19 @@
   var peekKind = 'timetable';
 
   // 三套提示词：用户复制去问 DeepSeek / 豆包，拿 JSON 回来
+  var HIST_PROMPT =
+    '你是学生档案整理助手。我会给你第二课堂（素拓平台）或志愿服务（志愿汇）的历史记录，' +
+    '可能是截图也可能是复制的文字。\n' +
+    '请整理成下面的 JSON，**只输出 JSON，不要任何解释和 markdown 代码块**：\n' +
+    '\n' +
+    '{"history":[{"title":"图书馆志愿服务","date":"2024-11-05","credit":0,"hours":3}]}\n' +
+    '\n' +
+    '规则：\n' +
+    '1. credit 是二课学分（单位：分），hours 是志愿时长（单位：小时），没有就填 0\n' +
+    '2. date 用 YYYY-MM-DD；只知道年月就补成 YYYY-MM-01\n' +
+    '3. 一条记录一个对象，不要合并\n' +
+    '4. 看不清或换算不出来的，credit 和 hours 都填 0，**不要编造数字**';
+
   var PROMPTS = {
     timetable:
       '你是课程表信息提取助手。我会给你一张大学课程表的截图（或粘贴的文字）。\n' +
@@ -3884,6 +3909,105 @@
       if (el) el.hidden = (k !== pane);
     });
     state.impPane = pane;
+  }
+
+  /* ---------------- 导入历史：解析与落地 ---------------- */
+
+  function parseHistory(text) {
+    var raw = String(text || '').trim();
+    if (!raw) return [];
+
+    var out = [];
+
+    function push(title, date, credit, hours) {
+      var t = String(title || '').trim();
+      if (!t) return;
+      var cr = Number(credit) || 0;
+      var hr = Number(hours) || 0;
+      if (cr <= 0 && hr <= 0) return;
+      out.push({ id: 'h' + Date.now().toString(36) + out.length, title: t.slice(0, 40), date: String(date || ''), credit: cr, hours: hr });
+    }
+
+    // 1) 先试 JSON
+    var json = null;
+    try {
+      var s = raw.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '');
+      var i0 = s.indexOf('{'), i1 = s.lastIndexOf('}');
+      var j0 = s.indexOf('['), j1 = s.lastIndexOf(']');
+      if (i0 >= 0 && i1 > i0) json = JSON.parse(s.slice(i0, i1 + 1));
+      else if (j0 >= 0 && j1 > j0) json = JSON.parse(s.slice(j0, j1 + 1));
+    } catch (e) { json = null; }
+
+    if (json) {
+      var arr = json.history || json.items || json.records || (Array.isArray(json) ? json : null);
+      if (arr && arr.length) {
+        arr.forEach(function (it) {
+          push(it.title || it.name || it.活动 || it.内容,
+               it.date || it.日期 || '',
+               it.credit || it.二课学分 || 0,
+               it.hours || it.hour || it.时长 || 0);
+        });
+        if (out.length) return out;
+      }
+    }
+
+    // 2) 再按行硬解
+    raw.split(/\r?\n/).forEach(function (line) {
+      var s2 = line.trim().replace(/^[-*·\d.、)]+\s*/, '');
+      if (!s2) return;
+      var cr = 0, hr = 0;
+      var mc = s2.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:分|学分)/);
+      var mh = s2.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:小时|h\b|时)/);
+      if (mc) cr = parseFloat(mc[1]);
+      if (mh) hr = parseFloat(mh[1]);
+      if (!cr && !hr) return;
+      var md = s2.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      var date = md ? (md[1] + '-' + pad2(+md[2]) + '-' + pad2(+md[3])) : '';
+      var title = s2.replace(/([0-9]+(?:\.[0-9]+)?)\s*(?:分|学分|小时|时)/g, '')
+                    .replace(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/g, '')
+                    .replace(/[|,，;；]+/g, ' ')
+                    .replace(/\s+/g, ' ').trim();
+      push(title || '未命名记录', date, cr, hr);
+    });
+
+    return out;
+  }
+
+  function renderHistSum() {
+    var el = document.getElementById('histSum');
+    if (!el) return;
+    var n = (state.history || []).length;
+    if (!n) { el.textContent = '还没导入历史'; return; }
+    el.innerHTML = '已导入 <b>' + n + '</b> 条 · 二课 <b>' + fmt1(histSum('credit')) +
+                   '</b> 分 · 志愿 <b>' + fmt0(histSum('volunteer')) + '</b> 小时';
+  }
+
+  function openHistory() {
+    document.getElementById('histText').value = '';
+    renderHistSum();
+    document.getElementById('modalHistory').hidden = false;
+  }
+
+  function applyHistory() {
+    var text = document.getElementById('histText').value;
+    var rows = parseHistory(text);
+    if (!rows.length) { toast('没解析出记录 —— 检查一下格式'); return; }
+
+    state.history = (state.history || []).concat(rows);
+    rebuild();
+    refreshAll();
+    saveSoon();
+    document.getElementById('modalHistory').hidden = true;
+    toast('导入了 ' + rows.length + ' 条历史');
+  }
+
+  function clearHistory() {
+    state.history = [];
+    rebuild();
+    refreshAll();
+    saveSoon();
+    renderHistSum();
+    toast('历史已清空');
   }
 
   function openImport(pane) {
@@ -4750,7 +4874,7 @@
   function marqueeSegments() {
     var pend = state.records.filter(function (r) { return r.status === 'pending'; }).length;
     var todo = state.tasks.filter(function (t) { return !t.done; }).length;
-    var got = { credit: 0, volunteer: 0, run: 0 };
+    var got = { credit: histSum('credit'), volunteer: histSum('volunteer'), run: 0 };
     state.schedule.forEach(function (e) {
       got.credit += e.credit;
       got.volunteer += e.volunteerHours;
@@ -5255,6 +5379,7 @@
       }),
       maxPerDay: state.maxPerDay,
       run: JSON.parse(JSON.stringify(state.run)),
+      history: JSON.parse(JSON.stringify(state.history || [])),
       sources: JSON.parse(JSON.stringify(state.sources)),
       term: JSON.parse(JSON.stringify(state.term)),
       bg: bgOk ? JSON.parse(JSON.stringify(state.bg)) : { kind: 'default' },
@@ -5276,6 +5401,7 @@
     if (d.profile) state.profile = d.profile;
     if (d.maxPerDay) state.maxPerDay = d.maxPerDay;
     if (d.run) state.run = d.run;
+    if (d.history) state.history = d.history;
     if (d.sources) state.sources = d.sources;
     if (d.term) state.term = d.term;
     if (d.bg) state.bg = d.bg;
@@ -5525,6 +5651,7 @@
   }
 
   function refreshAll() {
+    renderHistSum();
     renderPanel();
     applyBg(state.bg || { kind: 'default' });
     regenerate();
@@ -5923,6 +6050,20 @@
     }
     var cfCancel = document.getElementById('cfCancel');
     if (cfCancel) cfCancel.addEventListener('click', closeConfirm);
+
+    var btnHist = document.getElementById('btnHistory');
+    if (btnHist) btnHist.addEventListener('click', openHistory);
+
+    var btnHistPrompt = document.getElementById('btnHistPrompt');
+    if (btnHistPrompt) btnHistPrompt.addEventListener('click', function () {
+      copyText(HIST_PROMPT, '提示词已复制，去粘给 AI 吧');
+    });
+
+    var btnHistOk = document.getElementById('btnHistOk');
+    if (btnHistOk) btnHistOk.addEventListener('click', applyHistory);
+
+    var btnHistClear = document.getElementById('btnHistClear');
+    if (btnHistClear) btnHistClear.addEventListener('click', clearHistory);
 
     var rl = document.getElementById('runLen');
     if (rl) {
