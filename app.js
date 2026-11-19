@@ -127,7 +127,7 @@
     lastIds: {},
 
     // 阳光乐跑学期数据（来自微信小程序「运动时间bank」的手动同步）
-    run: { done: 12, target: 27, km: 36, weeksLeft: 9, len: 30 },
+    run: { done: 18, target: 21, km: 27, weeksLeft: 4, len: 30 },
 
     // 三个数据源的接入状态：mode 表示走的是哪种适配器
     sources: {
@@ -422,7 +422,7 @@
         end: r.e,
         credit: r.credit || 0,
         volunteerHours: r.volunteerHours || 0,
-        runKm: r.runKm || 0,
+        runKm: r.runKm ? runKmOf() : 0,
         capacity: (r.capacity === null || r.capacity === undefined) ? Infinity : r.capacity,
         flex: (r.runKm || 0) > 0,
         enrolled: r.enrolled || 0,
@@ -1400,6 +1400,49 @@
 
   /* ---------------- 数据接入：三个适配器 ---------------- */
 
+  /* ---------------- 阳光乐跑：官方标准 ----------------
+     来源：杭电体联《体育1》课程学生乐跑时间通知（2026-10-25）
+     得分   0   60 70 80 90 100 +1 +2 +3 +4 +5
+     天数  <14  14 16 18 20 21  22 24 25 26 27
+     少于 10 天，体育课平时分也为 0 */
+  var RUN_STEPS = [
+    [27, 105], [26, 104], [25, 103], [24, 102], [22, 101],
+    [21, 100], [20, 90], [18, 80], [16, 70], [14, 60]
+  ];
+
+  function runScore(days) {
+    var n = Number(days) || 0;
+    if (n < 14) return 0;
+    for (var i = 0; i < RUN_STEPS.length; i++) {
+      if (n >= RUN_STEPS[i][0]) return RUN_STEPS[i][1];
+    }
+    return 0;
+  }
+
+  // 下一档要跑几天
+  function runNextStep(days) {
+    var n = Number(days) || 0;
+    var steps = [14, 16, 18, 20, 21, 22, 24, 25, 26, 27];
+    for (var i = 0; i < steps.length; i++) {
+      if (n < steps[i]) return steps[i];
+    }
+    return null;
+  }
+
+  // 单次距离：男生 2.0 km，女生 1.5 km
+  function runKmOf() {
+    var u = currentUser();
+    return (u && u.gender === 'f') ? 1.5 : 2.0;
+  }
+
+  function runScoreText(days) {
+    var sc = runScore(days);
+    var nx = runNextStep(days);
+    if (nx === null) return '<b>' + sc + '</b> 分（已封顶）';
+    var nxScore = runScore(nx);
+    return '<b>' + sc + '</b> 分 · 再 ' + (nx - days) + ' 天到 <b>' + nxScore + '</b> 分';
+  }
+
   function runLeft() { return Math.max(0, state.run.target - state.run.done); }
 
   function runPerWeek() {
@@ -1463,10 +1506,8 @@
     var left = runLeft();
     var runPct = state.run.target > 0 ? clamp(state.run.done / state.run.target * 100, 0, 100) : 0;
     var perWeek = runPerWeek();
-    var runFoot = left > 0
-      ? '还差 <b>' + left + '</b> 天 · 剩 ' + state.run.weeksLeft + ' 周 · 每周约 <b>' +
-        (Math.round(perWeek * 10) / 10) + '</b> 次'
-      : '<span class="hot">已达标 ' + state.run.done + ' 次，满分到手</span>';
+    var runFoot = runScoreText(state.run.done) +
+      ' · 剩 ' + state.run.weeksLeft + ' 周（单次 ' + fmt1(runKmOf()) + ' km）';
 
     /* ② 二课 */
     var open = 0, fit = 0;
@@ -1542,7 +1583,8 @@
     var box = document.getElementById('runPreview');
 
     if (left <= 0) {
-      box.innerHTML = '本学期 <b>' + done + '</b> 次已达标（满分线 ' + target + ' 次），累计 <b>' + km +
+      box.innerHTML = '本学期 <b>' + done + '</b> 天 = <b>' + runScore(done) + '</b> 分' +
+      '（100 分需 21 天，27 天 = +5），累计 <b>' + km +
         '</b> km。<span class="good">不用再安排跑步了。</span>';
     } else {
       box.innerHTML =
@@ -4211,10 +4253,9 @@
     if (kind === 'run') {
       var st = document.getElementById('runStat');
       if (st) {
-        var left = runLeft();
-        st.textContent = '场地 07:00–21:00 开放 · 本周计划 ' + state.goals.run + ' 天 · 本学期已完成 ' +
-          state.run.done + ' / ' + state.run.target + ' 天' +
-          (left > 0 ? '（还差 ' + left + ' 天，剩 ' + state.run.weeksLeft + ' 周）' : '，已跑满');
+        st.innerHTML = '场地 07:00–21:00 · 本周计划 ' + state.goals.run + ' 天 · 本学期 ' +
+          state.run.done + ' 天 = ' + runScoreText(state.run.done) +
+          ' · 单次 ' + fmt1(runKmOf()) + ' km';
       }
     }
 
@@ -4921,10 +4962,13 @@
 
       { h: '一、阳光乐跑算「天数」，不是「次数」' },
       { p: '这是最容易搞错的一条。体育部按「有效天数」计：一天跑一次算 1 天，一天跑三次也只算 1 天。小程序上那个数字是天数。' },
-      { li: '选上体育课的学期：和体育课平时分挂钩。一学期约十周，跑满 10 天是底线（少于 10 天平时分为 0），27 天拿满 100 分。' },
-      { li: '大三大四：课外体育活动学分，每学期 18 天，跟能不能毕业挂钩。大三没跑完，大四要加倍补。' },
-      { p: '场地时间：西区副馆南侧塑胶跑道 07:00–21:00，东区东田径场 07:00–21:00，北区西北田径场 18:30–21:00。单次建议不超过 5 公里。' },
-      { p: '刷脸那一刻就进入过程考核——别锁屏、别切后台、别骑车代跑。一经核实，当学期成绩作废，体育课直接挂科。' },
+      { li: '单次距离：男生 2.0 公里，女生 1.5 公里。' },
+      { li: '分数看天数：《体育1》的标准是 14 天 60 分、16 天 70、18 天 80、20 天 90、21 天 100。' },
+      { li: '21 天以上就是加分：22 天 +1、24 天 +2、25 天 +3、26 天 +4、27 天 +5。' },
+      { li: '少于 10 天，体育课平时分也是 0。' },
+      { p: '场地时间：西区副馆南侧塑胶跑道 07:00–21:00，东区东田径场 07:00–21:00，北区西北田径场 18:30–21:00。' },
+      { p: '刷脸那一刻就进入过程考核 —— 别锁屏、别切后台、别骑车代跑。乐跑违规者，体育课按缺考处理。' },
+      { p: '以上来自杭电体联《体育1》课程学生乐跑时间通知（2026 年 10 月 25 日）。乐跑时间 2026-10-28 至 2026-12-18，约七周，校运会和法定节假日期间暂停。' },
 
       { h: '二、课外教育学分：讲座至少 8 次' },
       { p: '依据《本科生课外教育管理规定》（杭电教〔2013〕145 号，手册 P112–115），纳入学籍管理的课外教育项目共十来项。其中和我们排日程最相关的是这几个：' },
