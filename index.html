@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>撞不上 · 课表 / 二课 / 作业，一条都不打架</title>
+<meta name="description" content="把课表、二课活动、作业截止和校园跑，排进同一张不冲突的日程。">
+<script>
+  // 先于样式生效，避免刷新时闪一下白
+  (function () {
+    try {
+      var t = localStorage.getItem('zhuangbushang.theme');
+      if (t !== 'dark' && t !== 'light') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#4F46E5"/>
+    <stop offset="100%" stop-color="#06B6D4"/>
+  </linearGradient>
+  <linearGradient id="ringGradDone" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#0E9C7C"/>
+    <stop offset="100%" stop-color="#34D399"/>
+  </linearGradient>
+</defs></svg>
+
+<div class="bglayer" id="bglayer" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark" aria-hidden="true"><span></span><span></span></div>
+    <div class="brand-text">
+      <h1>撞不上</h1>
+      <p>课表 · 二课 · 作业 · 跑操</p>
+    </div>
+  </div>
+
+  <nav class="nav" id="nav">
+    <button class="nv active" type="button" data-page="home">首页</button>
+    <button class="nv" type="button" data-page="day">日程</button>
+    <button class="nv" type="button" data-page="course">二课</button>
+    <button class="nv" type="button" data-page="volunteer">志愿</button>
+    <button class="nv" type="button" data-page="run">跑操</button>
+    <button class="nv" type="button" data-page="data">数据</button>
+    <button class="nv" type="button" data-page="me">我的</button>
+  </nav>
+
+  <div class="topbar-right">
+    <span class="pill pill-demo">演示数据</span>
+    <button class="icon-btn theme-btn" id="btnTheme" type="button" title="切换深浅色" aria-label="切换深浅色">
+      <svg class="th-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.1"/>
+        <path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5l1.5 1.5M17 17l1.5 1.5M18.5 5.5L17 7M7 17l-1.5 1.5"/>
+      </svg>
+      <svg class="th-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M20.4 14.6A8.6 8.6 0 0 1 9.4 3.6a8.6 8.6 0 1 0 11 11z"/>
+      </svg>
+    </button>
+    <button class="btn ghost" id="btnCopy" type="button">复制日程</button>
+    <button class="btn primary" id="btnAdd" type="button">＋ 导入</button>
+  </div>
+</header>
+
+<!-- ==================== 首页 ==================== -->
+<main class="page" id="page-home">
+
+  <section class="hero">
+    <div class="hero-kicker">
+      <span class="hero-dot"></span>在线 · <span id="heroTerm">第 12 周</span>
+    </div>
+    <h1 class="hero-title">撞不上</h1>
+    <p class="hero-sub">课表 · 二课 · 作业 · 跑操，一条都不打架</p>
+    <p class="hero-desc">
+      课表在钉钉，二课在素拓平台，作业散在课程群，校园跑在小程序。<br>
+      四套系统，各管一摊 —— 没有一个人替你算它们撞不撞。这个网页就干这一件事。
+    </p>
+    <div class="hero-act">
+      <button class="btn primary lg" type="button" data-page="day">进入日程 →</button>
+      <button class="btn ghost lg" type="button" data-article="howto">第一次用？看这里</button>
+    </div>
+    <div class="hero-stats" id="heroStats"></div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marqueeTrack"></div>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">它能做什么</h2>
+        <p class="card-sub">不是更好的日历，是跨系统的时间冲突检测器</p>
+      </div>
+    </div>
+    <div class="feat-grid" id="featGrid"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">接下来要做</h2>
+        <p class="card-sub">按截止时间排，最近的在前</p>
+      </div>
+      <button class="link-btn" type="button" data-page="day">全部 →</button>
+    </div>
+    <div class="home-todo" id="homeTodo"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">文章</h2>
+        <p class="card-sub">怎么用、为什么这么做</p>
+      </div>
+      <span class="muted" id="articleCount"></span>
+    </div>
+    <div class="posts" id="postList"></div>
+  </section>
+
+  <section class="card">
+    <div class="sitegrid">
+
+      <div class="fblock">
+        <h3 class="fblock-t">关于作者</h3>
+        <div class="author">
+          <span class="author-av"><img src="author.jpg" alt="Mobius 的头像"></span>
+          <div class="author-main">
+            <div class="author-name">Mobius</div>
+            <div class="author-sub">杭州电子科技大学 · 本科生</div>
+          </div>
+        </div>
+        <p class="author-bio">
+          写代码，也写信。白天在终端里修 bug，夜里整理笔记。<br>
+          这个网页是用 HTML 和一点偏执写成的 —— 没有框架，没有后端，双击就能跑。
+        </p>
+        <div class="author-links">
+          <a class="alink" href="https://mobius.wang" target="_blank" rel="noopener">
+            <span class="alink-k">博客</span><span class="alink-v">mobius.wang</span>
+          </a>
+          <a class="alink" href="https://github.com/Mobius-msz" target="_blank" rel="noopener">
+            <span class="alink-k">GitHub</span><span class="alink-v">Mobius-msz</span>
+          </a>
+          <a class="alink" href="mailto:moshenzhe0917@163.com">
+            <span class="alink-k">邮箱</span><span class="alink-v">moshenzhe0917@163.com</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="fblock">
+        <h3 class="fblock-t">友链</h3>
+        <p class="fblock-d">同行的人，和他们的壳。</p>
+        <div class="flinks" id="flinkList">
+          <a class="flink" href="https://mobius.wang" target="_blank" rel="noopener">
+            <span class="flink-dot"></span>
+            <span class="flink-main">
+              <span class="flink-name">Mobius // Shell</span>
+              <span class="flink-desc">作者博客 · 写代码，也写信</span>
+            </span>
+            <span class="flink-go">↗</span>
+          </a>
+          <a class="flink" href="https://republic-of-narcissus.icu" target="_blank" rel="noopener">
+            <span class="flink-dot"></span>
+            <span class="flink-main">
+              <span class="flink-name">Republic of Narcissus</span>
+              <span class="flink-desc">republic-of-narcissus.icu</span>
+            </span>
+            <span class="flink-go">↗</span>
+          </a>
+          <a class="flink" href="https://funsh.icu" target="_blank" rel="noopener">
+            <span class="flink-dot"></span>
+            <span class="flink-main">
+              <span class="flink-name">fnet</span>
+              <span class="flink-desc">funsh.icu</span>
+            </span>
+            <span class="flink-go">↗</span>
+          </a>
+        </div>
+        <p class="flink-tip">想交换友链？发邮件给作者就行。</p>
+      </div>
+
+    </div>
+  </section>
+
+  <p class="site-foot">撞不上 · 2026 · 用 HTML 和一点偏执写成</p>
+
+</main>
+
+<!-- ==================== 日程 ==================== -->
+<main class="page" id="page-day" hidden>
+
+  <section class="card settle-card" id="settleCard" hidden>
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">待结算 <span class="settle-badge" id="settleCount"></span></h2>
+        <p class="card-sub">这些已经结束了 —— 去了还是没去？记一笔才算数</p>
+      </div>
+    </div>
+    <div class="settle-list" id="settleList"></div>
+  </section>
+
+  <section class="card dayview">
+    <div class="card-head">
+      <h2 class="card-title">这几天 <span class="muted" id="weekRange"></span>
+        <span class="term-chip" id="termChip"></span></h2>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="daystrip" id="daystrip"></div>
+    <div class="agenda" id="agenda"></div>
+    <div class="daynote" id="dayNote"></div>
+  </section>
+
+  <section class="card todo-card">
+    <div class="card-head">
+      <h2 class="card-title">作业清单</h2>
+      <div class="todo-head-right">
+        <span class="todo-count" id="todoCount">0 / 0</span>
+        <button class="btn ghost sm" id="btnImportTasks" type="button">＋ 导入作业</button>
+      </div>
+    </div>
+    <div class="todo-bar"><i id="todoBar"></i></div>
+    <div class="todo-list" id="todoList"></div>
+  </section>
+
+  <details class="card card-collapse" id="rejectCard">
+    <summary>
+      <span>这些没排进去</span>
+      <span class="sum-right"><span class="muted" id="rejectCount"></span><i class="chev">›</i></span>
+    </summary>
+    <div class="rejected" id="rejected"></div>
+  </details>
+
+</main>
+
+<!-- ==================== 二课 ==================== -->
+<main class="page" id="page-course" hidden>
+  <section class="card" id="profileCard"></section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">二课活动</h2>
+        <p class="card-sub">系统只负责排序和提醒冲突，报不报你自己勾</p>
+      </div>
+      <div class="seg" id="seg-course">
+        <button type="button" data-pickmode="edit">编辑活动</button>
+        <button type="button" data-pickmode="done">已编辑</button>
+      </div>
+    </div>
+    <div class="pick-toolbar">
+      <span class="pick-count" id="count-course"></span>
+      <div class="pick-actions">
+        <button class="btn ghost sm" type="button" data-pickall="course">按推荐勾上</button>
+        <button class="btn ghost sm" type="button" data-clear="course">清空</button>
+      </div>
+    </div>
+    <div class="pick-list" id="list-course"></div>
+  </section>
+
+  <details class="card card-collapse" id="hist-course-wrap">
+    <summary>
+      <span>我的历史</span>
+      <span class="sum-right"><span class="muted" id="hist-course-count"></span><i class="chev">›</i></span>
+    </summary>
+    <div class="hist" id="history-course"></div>
+  </details>
+</main>
+
+<!-- ==================== 志愿 ==================== -->
+<main class="page" id="page-volunteer" hidden>
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">志愿服务</h2>
+        <p class="card-sub">时长按小时算，勾上就进日程</p>
+      </div>
+      <div class="seg" id="seg-volunteer">
+        <button type="button" data-pickmode="edit">编辑活动</button>
+        <button type="button" data-pickmode="done">已编辑</button>
+      </div>
+    </div>
+    <div class="pick-toolbar">
+      <span class="pick-count" id="count-volunteer"></span>
+      <div class="pick-actions">
+        <button class="btn ghost sm" type="button" data-pickall="volunteer">按推荐勾上</button>
+        <button class="btn ghost sm" type="button" data-clear="volunteer">清空</button>
+      </div>
+    </div>
+    <div class="pick-list" id="list-volunteer"></div>
+  </section>
+
+  <details class="card card-collapse" id="hist-volunteer-wrap">
+    <summary>
+      <span>我的历史</span>
+      <span class="sum-right"><span class="muted" id="hist-volunteer-count"></span><i class="chev">›</i></span>
+    </summary>
+    <div class="hist" id="history-volunteer"></div>
+  </details>
+</main>
+
+<!-- ==================== 跑操 ==================== -->
+<main class="page" id="page-run" hidden>
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">校园跑</h2>
+        <p class="card-sub" id="runStat">一周跑几次，你自己定</p>
+      </div>
+      <div class="seg" id="seg-run">
+        <button type="button" data-pickmode="edit">编辑活动</button>
+        <button type="button" data-pickmode="done">已编辑</button>
+      </div>
+    </div>
+    <div class="pick-toolbar">
+      <span class="pick-count" id="count-run"></span>
+      <div class="pick-actions">
+        <button class="btn ghost sm" type="button" data-pickall="run">按推荐勾上</button>
+        <button class="btn ghost sm" type="button" data-clear="run">清空</button>
+      </div>
+    </div>
+    <div class="pick-list" id="list-run"></div>
+  </section>
+</main>
+
+<!-- ==================== 我的 ==================== -->
+<main class="page" id="page-me" hidden>
+
+  <section class="card" id="accountCard"></section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">背景</h2>
+        <p class="card-sub">内置几套渐变；也能直接读你电脑上的 Wallpaper Engine 壁纸库</p>
+      </div>
+      <div class="pick-actions">
+        <button class="btn ghost sm" id="btnWeImport" type="button">导入 Wallpaper Engine 壁纸</button>
+        <button class="btn ghost sm" id="btnBgFile" type="button">本地图片 / 视频</button>
+        <button class="btn ghost sm" id="btnBgReset" type="button">恢复默认</button>
+      </div>
+    </div>
+
+    <div class="bg-grid" id="bgGrid"></div>
+
+    <p class="shot-hint" style="margin-top:14px">
+      点「导入」会弹出文件夹选择框 —— 选
+      <code>…\steamapps\workshop\content\431960</code>（你订阅的壁纸）或
+      <code>…\wallpaper_engine\projects</code>（内置的）。
+      浏览器只读你亲手选中的那个文件夹，不会上传到任何地方。
+    </p>
+
+    <input type="file" id="weDir" webkitdirectory directory multiple hidden>
+    <input type="file" id="bgFile" accept="image/*,video/mp4,video/webm" hidden>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">外观</h2>
+        <p class="card-sub">深色在晚上更护眼，跟着你的选择走</p>
+      </div>
+    </div>
+    <div class="theme-seg" id="themeSeg">
+      <button type="button" data-theme-v="light">浅色</button>
+      <button type="button" data-theme-v="dark">深色</button>
+    </div>
+  </section>
+
+  <section class="card" id="profileCard2"></section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 class="card-title">这一学期</h2>
+      <span class="muted">按你结算过的记录算</span>
+    </div>
+    <div class="stats" id="statsGrid"></div>
+    <div class="term-row">
+      <label for="termStart">开学第一天的周一</label>
+      <input type="date" id="termStart">
+      <span class="muted" id="termHint"></span>
+    </div>
+    <div class="about-link">
+      <span class="muted">数据怎么来的、为什么这么设计</span>
+      <button class="link-btn" type="button" data-page="about">关于这个项目 →</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== 关于 ==================== -->
+<main class="page" id="page-about" hidden>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">关于</h2>
+        <p class="card-sub">数据从哪来、为什么这么设计 —— 给老师和评委看的，平时不用管</p>
+      </div>
+      <button class="btn ghost sm" type="button" data-page="me">← 返回</button>
+    </div>
+
+    <h3 class="about-h">它是怎么跑的</h3>
+    <ol class="pipe pipe-col">
+          <li><b>① 拿到数据</b><span>课表、二课、作业统一成结构化数据，来源可以是 AI 整理、截图、手填</span></li>
+          <li><b>② 建约束</b><span>上课时段、地点之间要走多久、一天最多几场</span></li>
+          <li><b>③ 查冲突</b><span>时间撞车、转场来不及、当天太挤、名额抢不到</span></li>
+          <li><b>④ 排班</b><span>先补缺口，再按六个维度打分挑活动</span></li>
+          <li><b>⑤ 你点头</b><span>它只建议，删不删加不加你说了算</span></li>
+    </ol>
+
+    <h3 class="about-h">三个数据源，现在接到哪一步</h3>
+<table class="src-table">
+      <thead>
+        <tr><th>数据源</th><th>想要什么</th><th>现在怎么做</th><th>为什么不直连</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>校园跑<br><em>微信「运动时间bank」</em></td>
+          <td>实时次数与满分缺口</td>
+          <td><b>手动同步</b>：填次数和满分线，自动算出每周该跑几次</td>
+          <td>小程序无对外接口；抓包要装证书和代理，属逆向，号有被封风险</td>
+        </tr>
+        <tr>
+          <td>二课活动<br><em>erke.hdu.edu.cn</em></td>
+          <td>拉可报名列表并提示冲突</td>
+          <td><b>AI 整理</b>：复制提示词发给 DeepSeek / 豆包，把回答粘回来</td>
+          <td>该域名解析到非公网 IP，公网页面连域名都解析不了；校内还有同源策略和统一身份认证</td>
+        </tr>
+        <tr>
+          <td>钉钉课表<br><em>杭电工作台</em></td>
+          <td>读课表、把日程推回去</td>
+          <td><b>AI 整理</b> 识别课时 + <b>导出 .ics</b> 导回钉钉日历</td>
+          <td>读个人课表要学校管理员建应用并审批数据权限，学生开发者拿不到</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h3 class="about-h" style="margin-top:0">说明</h3>
+<p class="foot-note">
+      <b>架构：</b>三条都做成了「适配器」——接口能通就走接口，通不了就走 AI / 截图 / 手填，上层排程逻辑一行不用改。
+      这也是产品化必须的：数据源随时会变，排程引擎不该跟着重写。
+    </p>
+    <p class="foot-note">
+      <b>数据说明：</b>活动池是演示用的模拟数据（28 条，覆盖讲座、志愿服务、校园跑、竞赛、文体、职业发展六类），
+      时间按「下一个自然周」动态生成，方便随时演示。地点间转场耗时按校区区域粗略估算（同区 8 分钟、跨区 14–32 分钟），
+      不是真实导航数据。
+    </p>
+  </section>
+
+</main>
+
+<!-- ==================== 数据 ==================== -->
+<main class="page" id="page-data" hidden>
+
+  <section class="goals" id="goals" aria-label="目标完成度"></section>
+
+  <section class="sources" id="sources" aria-label="数据来源"></section>
+
+  <div class="datalayout">
+
+    <div class="datacol">
+
+      <section class="card panel-card">
+        <h2 class="card-title">我要凑够</h2>
+        <p class="card-sub">缺口决定它推什么给你 —— 按学院要求填：创新与拓展学分必修 2 分、4 分及以上记优秀；讲座类至少 8 次</p>
+        <div class="field-row">
+          <label class="field">
+            <span>二课学分</span>
+            <input type="number" id="goalCredit" min="0" max="10" step="0.1" value="2.5">
+            <em>分</em>
+          </label>
+          <label class="field">
+            <span>志愿时长</span>
+            <input type="number" id="goalVolunteer" min="0" max="80" step="1" value="6">
+            <em>小时</em>
+          </label>
+          <label class="field">
+            <span>本周跑操</span>
+            <input type="number" id="goalRun" min="0" max="7" step="1" value="2">
+            <em>天</em>
+          </label>
+        </div>
+      </section>
+
+      <section class="card panel-card">
+        <h2 class="card-title">我感兴趣</h2>
+        <p class="card-sub">命中越多，推得越靠前</p>
+        <div class="chips" id="interestChips"></div>
+      </section>
+
+      <section class="card panel-card">
+        <h2 class="card-title">我有课</h2>
+        <p class="card-sub">点亮的格子会显示在日程里，也一定会避开</p>
+        <div class="busy-grid" id="busyGrid"></div>
+        <button class="link-btn block-link" id="btnImportTable" type="button">从课表批量导入 →</button>
+      </section>
+
+      <section class="card panel-card">
+        <h2 class="card-title">排班口味</h2>
+        <label class="field wide">
+          <span>每天最多</span>
+          <input type="range" id="maxPerDay" min="1" max="5" step="1" value="3">
+          <em><b id="maxPerDayVal">3</b> 场</em>
+        </label>
+        <button class="btn primary block" id="btnGenerate" type="button">重新排一遍</button>
+      </section>
+
+    </div>
+
+    <div class="datacol">
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="card-title">导入</h2>
+          <span class="muted">复制提示词，丢给 AI，粘回来</span>
+        </div>
+
+        <div class="impgrid">
+          <button class="impcard" type="button" data-imp="timetable">
+            <span class="impi">📅</span>
+            <b>课表</b>
+            <span>从杭电助手 / 钉钉课表截图，或手写「周一 第1-2节 高数」</span>
+          </button>
+          <button class="impcard" type="button" data-imp="activities">
+            <span class="impi">🎪</span>
+            <b>二课活动</b>
+            <span>青春杭电「正在报名」列表，一次导入十几条并标出冲突</span>
+          </button>
+          <button class="impcard" type="button" data-imp="tasks">
+            <span class="impi">📝</span>
+            <b>作业</b>
+            <span>课程群里的作业通知，整理成带截止时间的清单</span>
+          </button>
+          <button class="impcard" type="button" data-imp="shot">
+            <span class="impi">🖼</span>
+            <b>截图识别</b>
+            <span>配了视觉模型的话，截图丢进去直接读（可选）</span>
+          </button>
+        </div>
+
+        <p class="shot-hint" style="margin-top:14px">
+          AI 那条路不用任何 Key —— 打开 DeepSeek / 豆包 / Kimi，把提示词和截图一起发过去，
+          复制它的回答粘回来就行。
+        </p>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+
+
+<!-- 弹窗：替换确认 -->
+<div class="modal" id="modalConfirm" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card confirm-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3 id="cfTitle">和已有活动重叠</h3>
+        <p class="card-sub" id="cfNote"></p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="cf-lines" id="cfLines"></div>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button class="btn ghost" type="button" id="cfCancel">算了</button>
+      <button class="btn primary" type="button" id="cfOk">替换</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：文章 -->
+<div class="modal" id="modalArticle" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card article-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3 id="articleTitle"></h3>
+        <p class="card-sub" id="articleMeta"></p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="article-body" id="articleBody"></div>
+  </div>
+</div>
+
+<!-- 弹窗：兴趣侧写问卷 -->
+<div class="modal" id="modalQuiz" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" style="width:min(720px,100%)">
+    <div class="modal-head">
+      <div>
+        <h3>五道题，摸清你的口味</h3>
+        <p class="card-sub">只影响推荐顺序，不会替你报名 —— 勾不勾还是你说了算</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <div class="quiz" id="quizBody"></div>
+
+    <div class="modal-actions">
+      <button class="link-btn" type="button" id="btnQuizReset">重来</button>
+      <div class="spacer"></div>
+      <button class="btn primary" type="button" id="btnQuizDone">生成画像</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：导入中心 -->
+<div class="modal" id="modalText" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" style="width:min(840px,100%)">
+    <div class="modal-head">
+      <div>
+        <h3>导入</h3>
+        <p class="card-sub">课表、二课活动、作业 —— 复制提示词丢给 AI，把回答粘回来就行</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <div class="imp-tabs" id="impTabs">
+      <button class="itab active" type="button" data-pane="timetable">课表</button>
+      <button class="itab" type="button" data-pane="activities">二课活动</button>
+      <button class="itab" type="button" data-pane="tasks">作业</button>
+      <div class="spacer"></div>
+      <button class="link-btn" type="button" id="btnToShot">改用截图导入</button>
+    </div>
+
+    <div class="pane" id="pane-timetable">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <b>复制这段提示词</b>
+          <span>连同课表截图一起发给 DeepSeek / 豆包 / Kimi</span>
+          <div class="step-actions">
+            <button class="btn ghost sm" type="button" data-copy="timetable">复制提示词</button>
+            <button class="link-btn" type="button" data-peek="timetable">看看它写了什么</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <b>把它给的东西粘回来</b>
+          <span>AI 返回的 JSON 或你自己的课表文字都行</span>
+        </div>
+      </div>
+
+      <textarea id="tableText" spellcheck="false" placeholder="周一 第1-2节 高等数学 三教201&#10;周一 第3-4节 大学物理 三教305&#10;周二 第5-6节 数据结构 二教108&#10;&#10;或者直接粘 AI 返回的 JSON：&#10;{&quot;courses&quot;:[{&quot;title&quot;:&quot;高等数学&quot;,&quot;day&quot;:&quot;周一&quot;,&quot;start&quot;:&quot;08:40&quot;,&quot;end&quot;:&quot;10:15&quot;}]}"></textarea>
+
+      <div class="modal-actions">
+        <button class="link-btn" type="button" id="btnTableSample">填入示例</button>
+        <div class="spacer"></div>
+        <button class="btn primary" type="button" id="btnTableParse">解析并应用</button>
+      </div>
+      <div class="parse-result" id="tableResult" hidden></div>
+    </div>
+
+    <div class="pane" id="pane-activities" hidden>
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <b>复制这段提示词</b>
+          <span>把「正在报名」那页截图一起发过去</span>
+          <div class="step-actions">
+            <button class="btn ghost sm" type="button" data-copy="activities">复制提示词</button>
+            <button class="link-btn" type="button" data-peek="activities">看看它写了什么</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <b>把活动列表粘回来</b>
+          <span>用空行分隔每条，或者直接粘 AI 返回的 JSON</span>
+        </div>
+      </div>
+
+      <textarea id="batchText" spellcheck="false" placeholder="【讲座】AIGC 与设计未来&#10;时间：11月24日 19:00-21:00&#10;地点：第一教学楼 101&#10;二课学分：0.2&#10;&#10;【志愿】图书馆书目整理&#10;时间：11月25日 14:00-16:00&#10;地点：图书馆 三层&#10;志愿时长：2 小时"></textarea>
+
+      <div class="modal-actions">
+        <button class="link-btn" type="button" id="btnBatchSample">填入示例</button>
+        <div class="spacer"></div>
+        <button class="btn primary" type="button" id="btnBatchParse">解析全部</button>
+      </div>
+      <div class="parse-result" id="batchResult" hidden></div>
+    </div>
+
+    <div class="pane" id="pane-tasks" hidden>
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <b>复制这段提示词</b>
+          <span>课程群里的作业通知，连截图一起发过去</span>
+          <div class="step-actions">
+            <button class="btn ghost sm" type="button" data-copy="tasks">复制提示词</button>
+            <button class="link-btn" type="button" data-peek="tasks">看看它写了什么</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <b>把作业清单粘回来</b>
+          <span>每行一条，格式：<code>作业标题 | 截止时间 | 课程</code></span>
+        </div>
+      </div>
+
+      <textarea id="taskText" spellcheck="false" placeholder="完成 AIGC 大赛项目文档 | 2026-11-22 23:59 | 生成式人工智能&#10;第十章习题 3、5、7 | 11-25 18:00 | 高等数学&#10;小组展示 PPT | 11-28 | 大学英语&#10;&#10;或者直接粘 AI 返回的 JSON：&#10;{&quot;tasks&quot;:[{&quot;title&quot;:&quot;...&quot;,&quot;due&quot;:&quot;2026-11-22 23:59&quot;}]}"></textarea>
+
+      <div class="modal-actions">
+        <button class="link-btn" type="button" id="btnTaskSample">填入示例</button>
+        <div class="spacer"></div>
+        <button class="btn primary" type="button" id="btnTaskParse">加入清单</button>
+      </div>
+      <div class="parse-result" id="taskResult" hidden></div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：提示词预览 -->
+<div class="modal" id="modalPeek" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" style="width:min(720px,100%)">
+    <div class="modal-head">
+      <div>
+        <h3>提示词原文</h3>
+        <p class="card-sub">整段复制，连图一起发给 AI</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <pre class="peek" id="peekBody"></pre>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button class="btn primary" type="button" id="btnPeekCopy">复制这段</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：校园跑同步 -->
+<div class="modal" id="modalRun" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>同步跑操数据</h3>
+        <p class="card-sub">打开微信「运动时间bank」，照着首页数字填一遍</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <div class="pr-grid">
+      <div class="pr-field"><span>本学期已完成（次）</span><input id="runDone" type="number" min="0" value="12"></div>
+      <div class="pr-field"><span>满分要求（次）</span><input id="runTarget" type="number" min="1" value="40"></div>
+      <div class="pr-field"><span>已跑里程（km）</span><input id="runKm" type="number" min="0" step="0.1" value="36"></div>
+      <div class="pr-field"><span>剩余教学周</span><input id="runWeeks" type="number" min="1" max="20" value="9"></div>
+    </div>
+
+    <div class="pr-warn">
+      小程序没开放接口，这一步是<b>手动同步</b>。以后有官方接口了，换的也只是适配器，排程引擎不用动。
+    </div>
+
+    <div class="run-preview" id="runPreview"></div>
+
+    <div class="pr-conf">
+      <button class="btn primary" type="button" id="btnRunApply">存下，顺便改本周目标</button>
+      <span class="hint">会把「本周跑操」目标调成刚好跑满的次数</span>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：截图导入 -->
+<div class="modal" id="modalShot" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" style="width:min(920px,100%)">
+    <div class="modal-head">
+      <div>
+        <h3>截图导入</h3>
+        <p class="card-sub">把手机截图拖进来，或直接 Ctrl+V 粘贴</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <div class="shot-tabs" id="shotTabs">
+      <button class="stab active" type="button" data-kind="timetable">课表截图</button>
+      <button class="stab" type="button" data-kind="activities">活动列表截图</button>
+      <div class="spacer"></div>
+      <button class="link-btn" type="button" id="btnToText">改用文字导入</button>
+    </div>
+
+    <div class="drop" id="dropZone" tabindex="0">
+      <input type="file" id="shotFile" accept="image/*" hidden>
+      <div class="drop-inner" id="dropInner">
+        <div class="drop-ico">🖼</div>
+        <b>拖入截图 · 点击选择 · Ctrl+V 粘贴</b>
+        <span>支持 JPG / PNG，用手机原图，别裁太狠</span>
+      </div>
+    </div>
+
+    <div class="shot-grid" id="shotGrid" hidden>
+      <div class="shot-imgwrap"><img id="shotBig" alt="截图预览"></div>
+      <div class="shot-panel" id="shotPanel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：截止提醒 -->
+<div class="modal" id="modalWarn" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card warn-card" role="dialog" aria-modal="true">
+    <div class="warn-ico">⏰</div>
+    <h3 id="warnTitle">有作业快到期了</h3>
+    <p class="warn-sub" id="warnSub">现在处理还来得及</p>
+    <ul class="warn-list" id="warnList"></ul>
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button class="btn primary" type="button" data-close>我这就去</button>
+    </div>
+  </div>
+</div>
+
+<!-- 首次进入：建一个本地档案 -->
+<div class="gate" id="gate" hidden>
+  <div class="gate-card">
+    <div class="gate-brand">
+      <div class="mark" aria-hidden="true"><span></span><span></span></div>
+      <div>
+        <h1>撞不上</h1>
+        <p>课表 · 二课 · 作业 · 跑操</p>
+      </div>
+    </div>
+
+    <h2 class="gate-title" id="gateTitle">先给这个档案起个名字</h2>
+
+    <div class="gate-users" id="gateUsers" hidden></div>
+
+    <div class="gate-form" id="gateForm">
+      <div id="gateNameRow">
+        <label class="gate-label" for="gateName">昵称</label>
+        <input class="gate-input" id="gateName" maxlength="12" placeholder="比如：小明" autocomplete="off">
+      </div>
+
+      <label class="gate-label">挑个头像</label>
+      <div class="gate-avs" id="gateAvs"></div>
+
+      <button class="gate-upload" type="button" id="gateUpload">
+        <span class="gu-prev" id="gateUploadPrev">＋</span>
+        <span class="gu-text" id="gateUploadText">上传自己的图片</span>
+        <span class="gu-tip">会自动裁成方形，只存在本机</span>
+      </button>
+      <input type="file" id="gateAvFile" accept="image/*" hidden>
+
+      <button class="btn primary gate-go" type="button" id="gateGo">开始使用</button>
+    </div>
+
+    <button class="link-btn gate-switch" type="button" id="gateSwitch" hidden>返回选择</button>
+
+    <p class="gate-note">档案只保存在这台电脑的浏览器里 —— 不上传、不需要密码，换台电脑就是新的开始。</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
