@@ -440,7 +440,7 @@
         <tr>
           <td>钉钉课表<br><em>杭电工作台</em></td>
           <td>读课表、把日程推回去</td>
-          <td><b>AI 整理</b> 识别课时 + <b>导出 .ics</b> 导回钉钉日历</td>
+          <td><b>AI 整理</b> 识别课时 + <b>导出课表</b>（图片 / PDF / .ics）</td>
           <td>读个人课表要学校管理员建应用并审批数据权限，学生开发者拿不到</td>
         </tr>
       </tbody>
@@ -552,6 +552,37 @@
 </main>
 
 
+
+<!-- 弹窗：导出课表 -->
+<div class="modal" id="modalExport" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card export-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>导出这一周的课表</h3>
+        <p class="card-sub">三种格式，看你要拿去干什么</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+    <div class="exp-grid">
+      <button class="exp" type="button" data-exp="png">
+        <span class="exp-tag">PNG</span>
+        <b>图片</b>
+        <em>发给同学、贴进群、塞进 PPT</em>
+      </button>
+      <button class="exp" type="button" data-exp="pdf">
+        <span class="exp-tag">PDF</span>
+        <b>PDF</b>
+        <em>打印出来贴桌上，或当作业附件</em>
+      </button>
+      <button class="exp" type="button" data-exp="ics">
+        <span class="exp-tag">ICS</span>
+        <b>日历文件</b>
+        <em>导入钉钉 / 手机日历，自动同步</em>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- 弹窗：替换确认 -->
 <div class="modal" id="modalConfirm" hidden>

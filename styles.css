@@ -1847,3 +1847,34 @@ html[data-theme="dark"] .seg button.on {
   .htodo { grid-template-columns: 22px 8px minmax(0, 1fr); }
   .htodo-when { grid-column: 3; justify-self: start; margin-top: 2px; }
 }
+
+
+/* ---------------- 导出课表 ---------------- */
+.export-card { width: min(560px, 100%); }
+.exp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.exp {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  padding: 15px 15px 17px; border-radius: 14px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  font-family: inherit; text-align: left; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.exp:hover {
+  border-color: var(--line-brand); background: var(--surface);
+  transform: translateY(-2px);
+}
+.exp-tag {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px; font-weight: 800; letter-spacing: .08em;
+  color: var(--brand-ink); background: var(--tint-brand);
+  padding: 2px 7px; border-radius: 5px; margin-bottom: 5px;
+}
+.exp b { font-size: 14px; font-weight: 800; color: var(--ink); }
+.exp em { font-style: normal; font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .exp-grid { grid-template-columns: minmax(0, 1fr); }
+  .exp { flex-direction: row; align-items: center; gap: 10px; }
+  .exp-tag { margin-bottom: 0; }
+  .exp em { display: none; }
+}
