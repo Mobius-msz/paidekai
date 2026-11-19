@@ -1765,6 +1765,7 @@
       if (!cb.checked) return;
       var it = batchDrafts[parseInt(cb.getAttribute('data-i'), 10)];
       if (!it || !it.ok) return;
+      it.ev.custom = true;
       state.events.push(it.ev);
       fresh.push(it.ev);
       added++;
@@ -3393,7 +3394,7 @@
   function quickApply() {
     if (!shot.quick.length) { toast('还没有录入任何活动'); return; }
 
-    shot.quick.forEach(function (e) { state.events.push(e); });
+    shot.quick.forEach(function (e) { e.custom = true; state.events.push(e); });
     var n = shot.quick.length;
 
     state.sources.erke.synced = true;
@@ -3581,7 +3582,9 @@
     list.forEach(function (it) {
       var d = dayIndex(it.day);
       if (d < 0 || !normTime(it.start)) return;
-      state.events.push(toEvent(it));
+      var ev = toEvent(it);
+      ev.custom = true;
+      state.events.push(ev);
       added++;
     });
     if (!added) { toast('没有可加入的条目'); return; }
@@ -5210,7 +5213,8 @@
       deadline: e.deadline ? new Date(e.deadline).getTime() : null,
       tags: (e.tags || []).slice(),
       org: e.org || '',
-      flex: !!e.flex
+      flex: !!e.flex,
+      custom: !!e.custom
     };
   }
 
@@ -5224,7 +5228,8 @@
       deadline: r.deadline ? new Date(r.deadline) : null,
       tags: (r.tags || []).slice(),
       org: r.org || '',
-      flex: !!r.flex
+      flex: !!r.flex,
+      custom: !!r.custom
     };
   }
 
@@ -5236,7 +5241,8 @@
       profile: JSON.parse(JSON.stringify(state.profile)),
       busy: state.busy.slice(),
       courses: JSON.parse(JSON.stringify(state.courses)),
-      events: state.events.map(stripEvent),
+      // 演示池来自代码里的 RAW，不存档 —— 否则改一次数据，老档案永远看不到
+      events: state.events.filter(function (e) { return e.custom; }).map(stripEvent),
       chosenIds: state.chosenIds.slice(),
       records: JSON.parse(JSON.stringify(state.records)),
       tasks: state.tasks.map(function (t) {
@@ -5277,7 +5283,11 @@
 
     if (d.busy) state.busy = d.busy.slice();
     if (d.courses) state.courses = d.courses;
-    if (d.events) state.events = d.events.map(restoreEvent);
+    uid = 0;                                         // 重建前重置，保证 id 稳定
+    state.events = buildEvents();                    // 演示池永远用最新代码
+    if (d.events && d.events.length) {
+      state.events = state.events.concat(d.events.map(restoreEvent));
+    }
     if (d.chosenIds) state.chosenIds = d.chosenIds.slice();
     if (d.records) state.records = d.records;
     if (d.tasks) {
@@ -6294,6 +6304,7 @@
         persist: persist, snapshot: snapshot, seedDemo: seedDemo,
         avatarFromFile: avatarFromFile, openAvatarEditor: openAvatarEditor, gateSubmit: gateSubmit,
         applyTheme: applyTheme, currentTheme: currentTheme,
+        state: state, store: store,
         openExport: openExport, drawScheduleCanvas: drawScheduleCanvas, pdfFromJpeg: pdfFromJpeg,
         drawDayCanvas: drawDayCanvas
       };
