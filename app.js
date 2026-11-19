@@ -2066,13 +2066,59 @@
     return cv;
   }
 
+  // 导出后弹预览：下载被浏览器拦了也有退路
+  function showResult(opts) {
+    var m = document.getElementById('modalResult');
+    if (!m) return;
+    document.getElementById('resultTitle').textContent = opts.title || '导出好了';
+    document.getElementById('resultSub').textContent = opts.sub || '';
+
+    var body = document.getElementById('resultBody');
+    body.innerHTML = '';
+    if (opts.imgUrl) {
+      var img = document.createElement('img');
+      img.src = opts.imgUrl;
+      img.alt = '导出的图片';
+      body.appendChild(img);
+    } else if (opts.embedUrl) {
+      var fr = document.createElement('iframe');
+      fr.src = opts.embedUrl;
+      fr.title = '导出预览';
+      body.appendChild(fr);
+    } else {
+      body.innerHTML = '<div class="result-plain">文件已经生成好了，点下面「下载文件」保存。</div>';
+    }
+
+    var dl = document.getElementById('resultDownload');
+    dl.href = opts.url;
+    dl.download = opts.name;
+    var op = document.getElementById('resultOpen');
+    op.href = opts.url;
+
+    m.hidden = false;
+  }
+
+  function exportDone(kind, url, name, canvas) {
+    showResult({
+      title: kind === 'pdf' ? 'PDF 生成好了' : '图片生成好了',
+      sub: '文件名：' + name +
+           (kind === 'img' ? ' —— 没自动下载的话，在图上右键 → 另存为' : ' —— 没自动下载的话，点下面的按钮'),
+      imgUrl: kind === 'img' ? url : null,
+      embedUrl: kind === 'pdf' ? url : null,
+      url: url,
+      name: name
+    });
+  }
+
   function exportSchedulePng() {
     if (!state.schedule.length && !state.courses.length) { toast('还没有排任何东西'); return; }
     var cv = drawScheduleCanvas();
     // 同步取值再点击，保住用户手势，浏览器不会拦
     var url = cv.toDataURL('image/png');
-    downloadUrl(url, '撞不上-课表-' + exportStamp() + '.png');
-    toast('图片已保存到下载文件夹');
+    var name = '撞不上-课表-' + exportStamp() + '.png';
+    downloadUrl(url, name);
+    exportDone('img', url, name);
+    toast('图片已生成');
   }
 
   // 最小 PDF：把 JPEG 原样塞进去，不依赖任何库
@@ -2131,9 +2177,10 @@
     var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
     var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
     var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-    downloadUrl(url, '撞不上-课表-' + exportStamp() + '.pdf');
-    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
-    toast('PDF 已保存到下载文件夹');
+    var name = '撞不上-课表-' + exportStamp() + '.pdf';
+    downloadUrl(url, name);
+    exportDone('pdf', url, name);
+    toast('PDF 已生成');
   }
 
   // 当天的日程画成一张单页
@@ -2318,8 +2365,10 @@
   function exportDayPng() {
     var cv = drawDayCanvas();
     var url = cv.toDataURL('image/png');
-    downloadUrl(url, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png');
-    toast('图片已保存到下载文件夹');
+    var name = '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png';
+    downloadUrl(url, name);
+    exportDone('img', url, name);
+    toast('图片已生成');
   }
 
   function exportDayPdf() {
@@ -2327,9 +2376,10 @@
     var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
     var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
     var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-    downloadUrl(url, '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf');
-    setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
-    toast('PDF 已保存到下载文件夹');
+    var name = '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf';
+    downloadUrl(url, name);
+    exportDone('pdf', url, name);
+    toast('PDF 已生成');
   }
 
   var exportMode = 'week';
