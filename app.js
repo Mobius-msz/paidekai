@@ -5098,6 +5098,7 @@
   var gateMode = 'new';
   var gateAv = 0;
   var gateCustom = null;
+  var gateGender = 'm';          // 'm' | 'f' | ''
 
   function isImgAv(a) {
     return typeof a === 'string' && a.indexOf('data:image') === 0;
@@ -5306,6 +5307,7 @@
   function showGate(mode) {
     gateMode = mode || 'new';
     if (gateMode !== 'avatar') gateCustom = null;
+    if (gateMode === 'new') gateGender = 'm';
     renderGate();
     document.getElementById('gate').hidden = false;
   }
@@ -5339,6 +5341,15 @@
       switchBtn.hidden = false;
       switchBtn.textContent = '建个新的';
       return;
+    }
+
+    var gWrap = document.getElementById('gateGender');
+    if (gWrap) {
+      Array.prototype.forEach.call(gWrap.querySelectorAll('[data-g]'), function (b) {
+        var on = b.getAttribute('data-g') === (gateGender || '');
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
     }
 
     list.innerHTML = '';
@@ -5394,7 +5405,7 @@
 
     store = store || { ver: 1, current: null, users: [], data: {} };
     var id = 'u' + Date.now().toString(36);
-    store.users.push({ id: id, name: nm, av: gateCustom || AVATARS[gateAv], at: Date.now() });
+    store.users.push({ id: id, name: nm, av: gateCustom || AVATARS[gateAv], gender: gateGender, at: Date.now() });
     store.current = id;
 
     seedDemo();          // 新档案：先铺一份演示例数据
@@ -5416,10 +5427,11 @@
       var u = currentUser();
       if (!u) return;
       u.av = gateCustom || AVATARS[gateAv];
+      u.gender = gateGender;
       persist();
       hideGate();
       renderAccount();
-      toast('头像换好了');
+      toast('资料改好了');
       return;
     }
     makeProfile(document.getElementById('gateName').value);
@@ -5430,6 +5442,7 @@
     if (!u) return;
     gateCustom = isImgAv(u.av) ? u.av : null;
     gateAv = Math.max(0, AVATARS.indexOf(isImgAv(u.av) ? '' : u.av));
+    gateGender = u.gender || '';
     showGate('avatar');
   }
 
@@ -5466,6 +5479,19 @@
 
   /* ---------------- 「我的」页档案卡 ---------------- */
 
+  function genderText(g) {
+    return g === 'm' ? '男生' : (g === 'f' ? '女生' : '性别没填');
+  }
+
+  function toggleGender() {
+    var u = currentUser();
+    if (!u) return;
+    u.gender = (u.gender === 'm') ? 'f' : 'm';   // 点一下切换，只有两态
+    persist();
+    renderAccount();
+    toast(genderText(u.gender));
+  }
+
   function renderAccount() {
     var el = document.getElementById('accountCard');
     if (!el || !store) return;
@@ -5481,7 +5507,11 @@
         avHtml(u.av, idx, 'ac-av') +
         '<div class="ac-body">' +
           '<div class="ac-name">' + esc(u.name) + '</div>' +
-          '<div class="ac-sub">' + agoText(state.savedAt) + ' · 这台电脑上共 ' + store.users.length + ' 个档案</div>' +
+          '<div class="ac-sub">' +
+            '<button class="ac-gender" type="button" data-ac="gender" title="点击切换">' +
+              genderText(u.gender) + '</button>' +
+            ' · ' + agoText(state.savedAt) + ' · 这台电脑上共 ' + store.users.length + ' 个档案' +
+          '</div>' +
         '</div>' +
         '<div class="ac-act">' +
           '<button class="btn ghost sm" type="button" data-ac="avatar">换头像</button>' +
@@ -5924,6 +5954,16 @@
     }
 
     /* ---- 本地档案 ---- */
+    var gateG = document.getElementById('gateGender');
+    if (gateG) {
+      gateG.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-g]');
+        if (!b) return;
+        gateGender = b.getAttribute('data-g') || '';
+        renderGate();
+      });
+    }
+
     var gateGo = document.getElementById('gateGo');
     if (gateGo) gateGo.addEventListener('click', gateSubmit);
 
@@ -5989,7 +6029,8 @@
         var b = ev.target.closest('[data-ac]');
         if (!b) return;
         var k = b.getAttribute('data-ac');
-        if (k === 'export') exportBackup();
+        if (k === 'gender') toggleGender();
+        else if (k === 'export') exportBackup();
         else if (k === 'import') pickBackupFile();
         else if (k === 'widget') openWidget();
         else if (k === 'avatar') openAvatarEditor();

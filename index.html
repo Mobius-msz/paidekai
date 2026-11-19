@@ -20,7 +20,7 @@
     }
   })();
 </script>
-<link rel="stylesheet" href="styles.css?v=20261120e">
+<link rel="stylesheet" href="styles.css?v=20261120f">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -940,6 +940,13 @@
         <input class="gate-input" id="gateName" maxlength="12" placeholder="比如：小明" autocomplete="off">
       </div>
 
+      <label class="gate-label">你是</label>
+      <div class="gate-gender" id="gateGender">
+        <button type="button" data-g="m">男生</button>
+        <button type="button" data-g="f">女生</button>
+        <button type="button" data-g="" class="gate-gender-skip">不方便说</button>
+      </div>
+
       <label class="gate-label">挑个头像</label>
       <div class="gate-avs" id="gateAvs"></div>
 
@@ -961,6 +968,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120e"></script>
+<script src="app.js?v=20261120f"></script>
 </body>
 </html>
