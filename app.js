@@ -5775,6 +5775,18 @@
       btnExportDay.addEventListener('click', function () { openExport('day'); });
     }
 
+    /* ---- 导出模块的四个入口 ---- */
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-exp2]');
+      if (!b) return;
+      ev.preventDefault();
+      var k = b.getAttribute('data-exp2');
+      if (k === 'week-png') exportSchedulePng();
+      else if (k === 'week-pdf') exportSchedulePdf();
+      else if (k === 'week-ics') downloadIcs();
+      else if (k === 'day') openExport('day');
+    });
+
     /* ---- 导出课表 ---- */
     document.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-exp]');
