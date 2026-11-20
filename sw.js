@@ -1,6 +1,7 @@
 /* 排得开 · Service Worker
-   离线可用：应用外壳走缓存，网络挂了也能打开。 */
-var CACHE = 'paidekai-20261120R';
+   网络优先：在线时永远取最新，断网才走缓存。
+   早期版本用 ignoreSearch:true + 缓存优先，带 ?v= 的资源会一直命中旧缓存。 */
+var CACHE = 'paidekai-20261120Z';
 var SHELL = [
   './',
   './index.html',
@@ -41,20 +42,23 @@ self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
-  if (url.origin !== location.origin) return;      // 跨域请求不拦
+  if (url.origin !== location.origin) return;
 
   e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then(function (hit) {
-      if (hit) return hit;
-      return fetch(req).then(function (res) {
-        if (res && res.status === 200 && res.type === 'basic') {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        }
-        return res;
-      }).catch(function () {
-        if (req.mode === 'navigate') return caches.match('./index.html');
-        return new Response('', { status: 504 });
+    fetch(req).then(function (res) {
+      if (res && res.status === 200 && res.type === 'basic') {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(req, copy); });
+      }
+      return res;
+    }).catch(function () {
+      return caches.match(req, { ignoreSearch: false }).then(function (hit) {
+        if (hit) return hit;
+        return caches.match(req, { ignoreSearch: true }).then(function (hit2) {
+          if (hit2) return hit2;
+          if (req.mode === 'navigate') return caches.match('./index.html');
+          return new Response('', { status: 504 });
+        });
       });
     })
   );
