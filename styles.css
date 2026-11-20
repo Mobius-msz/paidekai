@@ -237,7 +237,7 @@ a { color: var(--brand); }
 .mark span:first-child { width: 100%; opacity: .96; }
 .mark span:last-child { width: 58%; opacity: .66; }
 
-.brand-text h1 { font-size: 18px; line-height: 1.15; letter-spacing: .01em; }
+.brand-text h1 { font-size: 22px; font-weight: 900; line-height: 1.1; letter-spacing: -.015em; }
 .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--muted); letter-spacing: .01em; }
 
 .topbar-right { display: flex; align-items: center; gap: 9px; }
@@ -2158,7 +2158,7 @@ html[data-theme="dark"] .ghstar.on {
   .brand, .brand-text, .topbar-right { display: contents; }
 
   .mark { grid-row: 1; grid-column: 1; }
-  .brand-text h1 { grid-row: 1; grid-column: 2; align-self: center; font-size: 15.5px; margin: 0; }
+  .brand-text h1 { grid-row: 1; grid-column: 2; align-self: center; font-size: 19px; font-weight: 900; letter-spacing: -.02em; margin: 0; }
   #btnMode { grid-row: 1; grid-column: 3; }
   #btnCopy { grid-row: 1; grid-column: 4; }
   #btnAdd  { grid-row: 1; grid-column: 5; }
