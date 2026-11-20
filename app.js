@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120P';
+  var BUILD = '20261120Q';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -1179,7 +1179,7 @@
         steps[i][1]();
       } catch (err) {
         if (window.console && console.error) {
-          console.error('[撞不上] ' + steps[i][0] + ' 渲染失败：', err);
+          console.error('[排得开] ' + steps[i][0] + ' 渲染失败：', err);
         }
       }
     }
@@ -2056,7 +2056,7 @@
     g.fillStyle = '#131829';
     g.font = '800 42px "Microsoft YaHei", "PingFang SC", sans-serif';
     g.textBaseline = 'alphabetic';
-    g.fillText('撞不上 · 本周课表', PAD, 82);
+    g.fillText('排得开 · 本周课表', PAD, 82);
 
     g.fillStyle = '#8B94A8';
     g.font = '600 21px "Microsoft YaHei", sans-serif';
@@ -2068,7 +2068,7 @@
     g.textAlign = 'right';
     g.fillStyle = '#B9C1D2';
     g.font = '600 17px "Microsoft YaHei", sans-serif';
-    g.fillText('mobius-msz.github.io/zhuangbushang', W - PAD, 118);
+    g.fillText('mobius-msz.github.io/paidekai', W - PAD, 118);
     g.textAlign = 'left';
 
     // 列头
@@ -2185,7 +2185,7 @@
 
     g.fillStyle = '#B9C1D2';
     g.font = '600 15px "Microsoft YaHei", sans-serif';
-    g.fillText('撞不上 · 校园日程排班器', PAD, H - 22);
+    g.fillText('排得开 · 校园日程排班器', PAD, H - 22);
 
     g.textAlign = 'right';
     g.fillText('导出于 ' + new Date().toLocaleString('zh-CN', { hour12: false }), W - PAD, H - 22);
@@ -2243,7 +2243,7 @@
     var cv = drawScheduleCanvas();
     // 同步取值再点击，保住用户手势，浏览器不会拦
     var url = cv.toDataURL('image/png');
-    var name = '撞不上-课表-' + exportStamp() + '.png';
+    var name = '排得开-课表-' + exportStamp() + '.png';
     downloadUrl(url, name);
     exportDone('img', url, name);
     toast('图片已生成');
@@ -2305,7 +2305,7 @@
     var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
     var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
     var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-    var name = '撞不上-课表-' + exportStamp() + '.pdf';
+    var name = '排得开-课表-' + exportStamp() + '.pdf';
     downloadUrl(url, name);
     exportDone('pdf', url, name);
     toast('PDF 已生成');
@@ -2371,8 +2371,8 @@
     g.textAlign = 'right';
     g.fillStyle = '#B9C1D2';
     g.font = '600 16px "Microsoft YaHei", sans-serif';
-    g.fillText('撞不上 · 校园日程排班器', W - PAD, 84);
-    g.fillText('mobius-msz.github.io/zhuangbushang', W - PAD, 112);
+    g.fillText('排得开 · 校园日程排班器', W - PAD, 84);
+    g.fillText('mobius-msz.github.io/paidekai', W - PAD, 112);
     g.textAlign = 'left';
 
     g.strokeStyle = '#E7EAF3';
@@ -2482,7 +2482,7 @@
     // 页脚
     g.fillStyle = '#B9C1D2';
     g.font = '600 15px "Microsoft YaHei", sans-serif';
-    g.fillText('撞不上 · 校园日程排班器', PAD, H - 26);
+    g.fillText('排得开 · 校园日程排班器', PAD, H - 26);
     g.textAlign = 'right';
     g.fillText('导出于 ' + new Date().toLocaleString('zh-CN', { hour12: false }), W - PAD, H - 26);
     g.textAlign = 'left';
@@ -2493,7 +2493,7 @@
   function exportDayPng() {
     var cv = drawDayCanvas();
     var url = cv.toDataURL('image/png');
-    var name = '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.png';
+    var name = '排得开-' + WD[state.activeDay] + '-' + exportStamp() + '.png';
     downloadUrl(url, name);
     exportDone('img', url, name);
     toast('图片已生成');
@@ -2504,7 +2504,7 @@
     var jpeg = dataUrlToBytes(cv.toDataURL('image/jpeg', 0.93));
     var pdf = pdfFromJpeg(jpeg, cv.width, cv.height);
     var url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-    var name = '撞不上-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf';
+    var name = '排得开-' + WD[state.activeDay] + '-' + exportStamp() + '.pdf';
     downloadUrl(url, name);
     exportDone('pdf', url, name);
     toast('PDF 已生成');
@@ -2613,7 +2613,7 @@
 
     var blob = new Blob([buildIcs()], { type: 'text/calendar;charset=utf-8' });
     var url = URL.createObjectURL(blob);
-    downloadUrl(url, '撞不上日程.ics');
+    downloadUrl(url, '排得开日程.ics');
     setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
 
     toast('已导出 ' + state.schedule.length + ' 个日程，可导入钉钉日历');
@@ -5014,7 +5014,7 @@
     var top = 90;
     var feat = 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top +
                ',menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes';
-    var win = window.open('widget.html', 'zhuangbushang-widget', feat);
+    var win = window.open('widget.html', 'paidekai-widget', feat);
     if (!win) {
       toast('浏览器拦了这个弹窗，允许后再试');
     } else {
@@ -5024,12 +5024,12 @@
 
   function exportBackup() {
     persist();
-    var payload = { app: 'zhuangbushang', ver: 1, exportedAt: new Date().toISOString(), store: store };
+    var payload = { app: 'paidekai', ver: 1, exportedAt: new Date().toISOString(), store: store };
     var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
-    link.download = '撞不上-备份-' + ymd(new Date()) + '.json';
+    link.download = '排得开-备份-' + ymd(new Date()) + '.json';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -5041,8 +5041,8 @@
     if (!file) return;
     file.text().then(function (txt) {
       var obj = JSON.parse(txt);
-      if (!obj || obj.app !== 'zhuangbushang' || !obj.store || !obj.store.users || !obj.store.users.length) {
-        throw new Error('这不是撞不上的备份文件');
+      if (!obj || obj.app !== 'paidekai' || !obj.store || !obj.store.users || !obj.store.users.length) {
+        throw new Error('这不是排得开的备份文件');
       }
       store = obj.store;
       if (!store.current || !(store.data || {})[store.current]) {
@@ -5132,7 +5132,7 @@
   var ARTICLES = [{
     id: 'howto',
     tag: '指南',
-    title: '如何正确食用「撞不上」',
+    title: '如何正确食用「排得开」',
     sub: '五步，十分钟内能吃上',
     date: '2026-11-19',
     read: '3 分钟',
@@ -5318,7 +5318,7 @@
      深浅色主题
      ============================================================ */
 
-  var THEME_KEY = 'zhuangbushang.theme';
+  var THEME_KEY = 'paidekai.theme';
 
   function currentTheme() {
     return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -5351,7 +5351,7 @@
      本地档案：没有后端时，成熟的做法是本机档案，不是假登录
      ============================================================ */
 
-  var STORE_KEY = 'zhuangbushang.v1';
+  var STORE_KEY = 'paidekai.v1';
   var AVATARS = ['🐱', '🐼', '🦊', '🐧', '🐸', '🦉', '🐙', '🌵'];
   var AV_BG = ['#EEF1FE', '#FDF0EE', '#E8F7F1', '#FFF6E0', '#F3EFFE', '#E6F7FF', '#F5F7FC', '#FDEFF5'];
 
@@ -5400,9 +5400,19 @@
       fr.readAsDataURL(file);
     });
   }
+  var LEGACY_KEY = 'zhuangbushang.v1';   // 旧名字时期存下的档案
+
   function readStore() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
+      // 改名前的老档案：搬一次过来，别让人重新导入一遍
+      if (!raw) {
+        var oldRaw = localStorage.getItem(LEGACY_KEY);
+        if (oldRaw) {
+          localStorage.setItem(STORE_KEY, oldRaw);
+          raw = oldRaw;
+        }
+      }
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
       return null;

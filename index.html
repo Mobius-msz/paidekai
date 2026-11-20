@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>撞不上 · 课表 / 二课 / 作业，一条都不打架</title>
+<title>排得开 · 课表 / 二课 / 作业，一条都不打架</title>
 <meta name="description" content="把课表、二课活动、作业截止和阳光乐跑，排进同一张不冲突的日程。">
 <script>
   // 先于样式生效，避免刷新时闪一下白
   (function () {
     try {
-      var t = localStorage.getItem('zhuangbushang.theme');
+      var t = localStorage.getItem('paidekai.theme');
       if (t !== 'dark' && t !== 'light') {
         t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
       }
@@ -20,9 +20,9 @@
     }
   })();
 </script>
-<link rel="stylesheet" href="styles.css?v=20261120P">
+<link rel="stylesheet" href="styles.css?v=20261120Q">
 </head>
-<body data-build="20261120P">
+<body data-build="20261120Q">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="#4F46E5"/>
@@ -41,7 +41,7 @@
   <div class="brand">
     <div class="mark" aria-hidden="true"><span></span><span></span></div>
     <div class="brand-text">
-      <h1>撞不上</h1>
+      <h1>排得开</h1>
       <p>课表 · 二课 · 作业 · 乐跑</p>
     </div>
   </div>
@@ -79,7 +79,7 @@
     <div class="hero-kicker">
       <span class="hero-dot"></span>在线 · <span id="heroTerm">第 12 周</span>
     </div>
-    <h1 class="hero-title">撞不上</h1>
+    <h1 class="hero-title">排得开</h1>
     <p class="hero-sub">「这个东西都在哪看？」「这个作业什么时候结束？」「讲座会不会撞课程？」</p>
     <p class="hero-desc">
       你一定在大学里听过、也问过这几句话 —— 课表在这儿，作业七零八落，<br>
@@ -193,7 +193,7 @@
     </div>
   </section>
 
-  <p class="site-foot">撞不上 · 2026 · 用 HTML 和一点偏执写成</p>
+  <p class="site-foot">排得开 · 2026 · 用 HTML 和一点偏执写成</p>
 
 </main>
 
@@ -965,7 +965,7 @@
     <div class="gate-brand">
       <div class="mark" aria-hidden="true"><span></span><span></span></div>
       <div>
-        <h1>撞不上</h1>
+        <h1>排得开</h1>
         <p>课表 · 二课 · 作业 · 乐跑</p>
       </div>
     </div>
@@ -1008,6 +1008,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120P"></script>
+<script src="app.js?v=20261120Q"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
-/* 撞不上 · 桌面挂件
+/* 排得开 · 桌面挂件
    与主站同源，直接读 localStorage；只读展示，改动仍在主站里做。*/
 (function () {
   'use strict';
 
-  var KEY = 'zhuangbushang.v1';
-  var THEME_KEY = 'zhuangbushang.theme';
+  var KEY = 'paidekai.v1';
+  var THEME_KEY = 'paidekai.theme';
 
   function readStore() {
     try {
@@ -76,7 +76,7 @@
     if (!store || !store.users || !store.users.length) {
       app.innerHTML =
         '<div class="wg-empty">还没有档案。<br>先去主站建一个，这里就有东西了。<br><br>' +
-        '<a href="index.html" target="_blank">打开撞不上 →</a></div>';
+        '<a href="index.html" target="_blank">打开排得开 →</a></div>';
       return;
     }
 
@@ -118,7 +118,7 @@
     // 头部
     html += '<div class="wg-head">' +
               '<span class="wg-mark"></span>' +
-              '<span class="wg-name">' + esc(user ? user.name : '撞不上') + '</span>' +
+              '<span class="wg-name">' + esc(user ? user.name : '排得开') + '</span>' +
               (week ? '<span class="wg-week">第 ' + week + ' 周</span>' : '') +
             '</div>';
 
@@ -164,7 +164,7 @@
               '<div class="wg-stat"><b>' + pend + '</b><span>待结算</span></div>' +
             '</div>';
 
-    html += '<div class="wg-foot"><span>撞不上 · 桌面挂件</span>' +
+    html += '<div class="wg-foot"><span>排得开 · 桌面挂件</span>' +
             '<a href="index.html" target="_blank">打开主站 →</a></div>';
 
     app.innerHTML = html;
