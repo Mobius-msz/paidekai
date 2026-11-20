@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120S';
+  var BUILD = '20261120T';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -197,7 +197,7 @@
     pickMode: 'edit',
 
     // 学期：开学第一天的周一
-    term: { start: '2026-09-07' },
+    term: { start: '2026-09-07', grade: 2, semester: 1 },
 
     // 上次保存时间
     savedAt: 0
@@ -420,6 +420,7 @@
   ];
 
   var uid = 0;
+  var cid = 0;
 
   function buildEvents() {
     var now = Date.now();
@@ -687,7 +688,7 @@
 
   function freeSlot(d, selected, dur) {
     var blocks = [];
-    state.courses.forEach(function (c) {
+    activeCourses().forEach(function (c) {
       if (c.d === d) blocks.push([toMin(c.start), toMin(c.end)]);
     });
     selected.forEach(function (x) {
@@ -879,7 +880,7 @@
     var out = [];
     var covered = [];
 
-    state.courses.forEach(function (c) {
+    activeCourses().forEach(function (c) {
       if (c.d !== d) return;
       out.push({ kind: 'course', start: c.start, end: c.end, title: c.title, place: c.place });
       covered.push([toMin(c.start), toMin(c.end)]);
@@ -1141,6 +1142,188 @@
   }
 
   /* ---------------- 总渲染 ---------------- */
+
+  /* ---------------- 周次：单双周 / 自定义区间 ---------------- */
+
+  function courseWeeks(c) {
+    var w = c.weeks || {};
+    var from = parseInt(w.from, 10), to = parseInt(w.to, 10);
+    if (!(from >= 1)) from = 1;
+    if (!(to >= from)) to = 30;
+    return { from: from, to: to, parity: (w.parity === 'odd' || w.parity === 'even') ? w.parity : 'all' };
+  }
+
+  // 这门课在第 week 周上不上
+  function courseActive(c, week) {
+    if (!week) week = termWeek();
+    if (!week) return true;                       // 没设开学日，就当全都要上
+    var w = courseWeeks(c);
+    if (week < w.from || week > w.to) return false;
+    if (w.parity === 'odd' && week % 2 === 0) return false;
+    if (w.parity === 'even' && week % 2 === 1) return false;
+    return true;
+  }
+
+  function activeCourses() {
+    var wk = termWeek();
+    return state.courses.filter(function (c) { return courseActive(c, wk); });
+  }
+
+  function courseWeekText(c) {
+    var w = courseWeeks(c);
+    var p = w.parity === 'odd' ? '单周' : (w.parity === 'even' ? '双周' : '');
+    if (w.from === 1 && w.to === 30 && !p) return '每周';
+    if (w.from === 1 && w.to === 16 && !p) return '1-16 周';
+    return (p ? p + ' ' : '') + w.from + '-' + w.to + ' 周';
+  }
+
+  // 「1-16」「1-8,10-16」「1-16 单周」都能读
+  function parseWeeks(str, parityHint) {
+    var s = String(str || '').trim();
+    var parity = 'all';
+    if (parityHint === 'odd' || parityHint === 'even') parity = parityHint;
+    if (/单/.test(s)) parity = 'odd';
+    else if (/双/.test(s)) parity = 'even';
+
+    var nums = (s.match(/\d+/g) || []).map(function (x) { return parseInt(x, 10); });
+    var from = 1, to = 16;
+    if (nums.length >= 2) { from = Math.min.apply(null, nums); to = Math.max.apply(null, nums); }
+    else if (nums.length === 1) { from = 1; to = nums[0]; }
+    if (!(from >= 1)) from = 1;
+    if (to > 30) to = 30;
+    if (to < from) to = from;
+    return { from: from, to: to, parity: parity };
+  }
+
+  /* ---------------- 课程表编辑器 ---------------- */
+
+  var editingCourse = null;
+
+  function openCourseEditor() {
+    editingCourse = null;
+    fillCourseForm(null);
+    renderCourseList();
+    document.getElementById('modalCourse').hidden = false;
+  }
+
+  function fillCourseForm(c) {
+    document.getElementById('cfTitle').value = c ? c.title : '';
+    document.getElementById('cfDay').value = String(c ? c.d : 0);
+    document.getElementById('cfStart').value = c ? c.start : '08:40';
+    document.getElementById('cfEnd').value = c ? c.end : '10:15';
+    document.getElementById('cfPlace').value = c ? (c.place || '') : '';
+    var w = courseWeeks(c || {});
+    document.getElementById('cfFrom').value = c ? w.from : 1;
+    document.getElementById('cfTo').value = c ? w.to : 16;
+    document.getElementById('cfParity').value = c ? w.parity : 'all';
+    document.getElementById('cfSave').textContent = c ? '保存修改' : '加入';
+    document.getElementById('cfCancel').hidden = !c;
+    editingCourse = c ? c.id : null;
+  }
+
+  function renderCourseList() {
+    var el = document.getElementById('courseList');
+    var hint = document.getElementById('courseHint');
+    if (!el) return;
+
+    var wk = termWeek();
+    var rows = state.courses.slice().sort(function (p, q) {
+      if (p.d !== q.d) return p.d - q.d;
+      return toMin(p.start) - toMin(q.start);
+    });
+
+    if (!rows.length) {
+      el.innerHTML = '<div class="cempty">还没有课程。上面填一门，或者在「数据」页导入课表。</div>';
+    } else {
+      el.innerHTML = rows.map(function (c) {
+        var on = courseActive(c, wk);
+        return '<div class="crow' + (on ? '' : ' is-off') + '">' +
+                 '<span class="cday">' + WD[c.d] + '</span>' +
+                 '<span class="ctime">' + c.start + '–' + c.end + '</span>' +
+                 '<span class="cname">' + esc(c.title) + '</span>' +
+                 '<span class="cweek">' + courseWeekText(c) + '</span>' +
+                 '<span class="cplace">' + esc(c.place || '') + '</span>' +
+                 '<button class="link-btn cedit" type="button" data-cedit="' + c.id + '">改</button>' +
+                 '<button class="link-btn cdel" type="button" data-cdel="' + c.id + '">删</button>' +
+               '</div>';
+      }).join('');
+    }
+
+    if (hint) {
+      hint.textContent = rows.length
+        ? '共 ' + rows.length + ' 门 · 灰色的这周不上（单双周或不在周次范围里）'
+        : '';
+    }
+  }
+
+  function saveCourseFromForm() {
+    var title = document.getElementById('cfTitle').value.trim();
+    if (!title) { toast('先填课程名'); return; }
+    var start = document.getElementById('cfStart').value || '08:40';
+    var end = document.getElementById('cfEnd').value || '10:15';
+    if (toMin(end) <= toMin(start)) { toast('下课时间要晚于上课时间'); return; }
+
+    var data = {
+      d: parseInt(document.getElementById('cfDay').value, 10) || 0,
+      start: start,
+      end: end,
+      title: title.slice(0, 24),
+      place: document.getElementById('cfPlace').value.trim().slice(0, 20),
+      weeks: {
+        from: parseInt(document.getElementById('cfFrom').value, 10) || 1,
+        to: parseInt(document.getElementById('cfTo').value, 10) || 16,
+        parity: document.getElementById('cfParity').value
+      }
+    };
+    if (data.weeks.from < 1) data.weeks.from = 1;
+    if (data.weeks.to < data.weeks.from) data.weeks.to = data.weeks.from;
+
+    if (editingCourse) {
+      state.courses.forEach(function (c) {
+        if (c.id === editingCourse) {
+          c.d = data.d; c.start = data.start; c.end = data.end;
+          c.title = data.title; c.place = data.place; c.weeks = data.weeks;
+        }
+      });
+      toast('改好了');
+    } else {
+      data.id = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 100);
+      state.courses.push(data);
+      toast('加了一门课');
+    }
+
+    // 课表变了，时段格子也要跟着变
+    syncBusyFromCourses();
+    fillCourseForm(null);
+    renderCourseList();
+    regenerate();
+    persist();
+  }
+
+  function removeCourse(id) {
+    state.courses = state.courses.filter(function (c) { return c.id !== id; });
+    if (editingCourse === id) fillCourseForm(null);
+    syncBusyFromCourses();
+    renderCourseList();
+    regenerate();
+    persist();
+    toast('删掉了');
+  }
+
+  // 依据课程重算「我有事」格子
+  function syncBusyFromCourses() {
+    state.busy = [];
+    state.courses.forEach(function (c) {
+      var a0 = toMin(c.start), b0 = toMin(c.end);
+      Object.keys(SLOTS).forEach(function (k) {
+        var w = SLOTS[k];
+        if (a0 < w[1] && w[0] < b0) {
+          var key = busyKey(c.d, k);
+          if (state.busy.indexOf(key) === -1) state.busy.push(key);
+        }
+      });
+    });
+  }
 
   function renderAll() {
     // 每块单独兜住：一个渲染器出错，不能把整页拖空
@@ -1942,6 +2125,7 @@
         place: String(it.place || it.room || it.location || '').trim(),
         start: st,
         end: en,
+        weeks: parseWeeks(it.weeks || it.week || '', it.parity || ''),
         raw: ''
       });
     });
@@ -1972,8 +2156,10 @@
         if (state.busy.indexOf(k) === -1) state.busy.push(k);
       });
       state.courses.push({
+        id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000) + state.courses.length,
         d: h.d, start: h.start, end: h.end,
-        title: h.title, place: h.place
+        title: h.title, place: h.place,
+        weeks: h.weeks || { from: 1, to: 16, parity: 'all' }
       });
     });
 
@@ -3918,14 +4104,16 @@
       '你是课程表信息提取助手。我会给你一张大学课程表的截图（或粘贴的文字）。\n' +
       '请把它整理成下面的 JSON，**只输出 JSON，不要任何解释和 markdown 代码块**：\n' +
       '\n' +
-      '{"courses":[{"title":"高等数学 A1","day":"周二","start":"08:40","end":"10:15","place":"正心楼 518"}]}\n' +
+      '{"courses":[{"title":"高等数学 A1","day":"周二","start":"08:40","end":"10:15","place":"正心楼 518","weeks":"1-16","parity":"all"}]}\n' +
       '\n' +
       '规则：\n' +
       '1. day 只能是 周一 / 周二 / 周三 / 周四 / 周五 / 周六 / 周日\n' +
       '2. start、end 用 24 小时制 HH:MM；一门课跨多个节次时，取最早上课时间和最晚下课时间\n' +
       '3. place 是教室，图中没有就填空字符串 ""\n' +
       '4. 看不清的字段一律填空字符串，**不要编造**\n' +
-      '5. 同一门课在一周内上多次，就输出多条',
+      '5. 同一门课在一周内上多次，就输出多条\n' +
+      '6. weeks 写周次范围，比如 "1-16"；只上前八周就写 "1-8"\n' +
+      '7. parity 只能是 all / odd / even —— 单周课写 odd，双周课写 even，每周都上写 all',
 
     activities:
       '你是校园活动信息提取助手。我会给你「青春杭电」二课平台的活动列表截图（或复制的文字）。\n' +
@@ -4918,9 +5106,18 @@
     return weekOf(new Date());
   }
 
+  function gradeText() {
+    var g = (state.term && state.term.grade) || 0;
+    var s = (state.term && state.term.semester) || 1;
+    if (!g) return '';
+    return ['大一', '大二', '大三', '大四'][g - 1] + (s === 2 ? '下' : '上');
+  }
+
   function termLabel() {
     var w = termWeek();
-    return w ? '第 ' + w + ' 周' : '未设置开学日';
+    var g = gradeText();
+    if (!w) return '未设置开学日';
+    return (g ? g + ' · ' : '') + '第 ' + w + ' 周';
   }
 
   var FEATURES = [
@@ -5259,12 +5456,18 @@
     if (inp && document.activeElement !== inp) {
       inp.value = (state.term && state.term.start) || '';
     }
+    var tG = document.getElementById('termGrade');
+    var tS = document.getElementById('termSem');
+    if (tG && document.activeElement !== tG) tG.value = String((state.term && state.term.grade) || 1);
+    if (tS && document.activeElement !== tS) tS.value = String((state.term && state.term.semester) || 1);
+
     var hint = document.getElementById('termHint');
     if (hint) hint.textContent = '现在是' + termLabel();
   }
 
   function dayCourses(d) {
-    return state.courses.filter(function (c) { return c.d === d; })
+    var wk = termWeek();
+    return state.courses.filter(function (c) { return c.d === d && courseActive(c, wk); })
       .sort(function (a, b) { return toMin(a.start) - toMin(b.start); });
   }
 
@@ -5690,6 +5893,14 @@
     store = store || { ver: 1, current: null, users: [], data: {} };
     var id = 'u' + Date.now().toString(36);
     store.users.push({ id: id, name: nm, av: gateCustom || AVATARS[gateAv], gender: gateGender, at: Date.now() });
+    // 学期信息跟着档案走
+    var gg = document.getElementById('gateGrade');
+    var ss = document.getElementById('gateSem');
+    state.term = {
+      start: (state.term && state.term.start) || STATE_DEFAULTS.term.start,
+      grade: gg ? (parseInt(gg.value, 10) || 1) : 1,
+      semester: ss ? (parseInt(ss.value, 10) || 1) : 1
+    };
     store.current = id;
 
     seedData();          // 按当前模式铺数据
@@ -6161,6 +6372,47 @@
       applyMode(state.mode === 'demo' ? 'normal' : 'demo');
     });
 
+    var cfSave = document.getElementById('cfSave');
+    if (cfSave) cfSave.addEventListener('click', saveCourseFromForm);
+
+    var cfCancel = document.getElementById('cfCancel');
+    if (cfCancel) cfCancel.addEventListener('click', function () { fillCourseForm(null); });
+
+    var cList = document.getElementById('courseList');
+    if (cList) {
+      cList.addEventListener('click', function (ev) {
+        var e1 = ev.target.closest('[data-cedit]');
+        if (e1) {
+          var id = e1.getAttribute('data-cedit');
+          var cur = null;
+          state.courses.forEach(function (x) { if (x.id === id) cur = x; });
+          if (cur) fillCourseForm(cur);
+          return;
+        }
+        var e2 = ev.target.closest('[data-cdel]');
+        if (e2) removeCourse(e2.getAttribute('data-cdel'));
+      });
+    }
+
+    var btnCourse = document.getElementById('btnCourse');
+    if (btnCourse) btnCourse.addEventListener('click', openCourseEditor);
+
+    var tG = document.getElementById('termGrade');
+    var tS = document.getElementById('termSem');
+    function saveGrade() {
+      var g = parseInt(tG.value, 10) || 1;
+      var s = parseInt(tS.value, 10) || 1;
+      state.term = state.term || {};
+      state.term.grade = g;
+      state.term.semester = s;
+      var warn = document.getElementById('termWarn');
+      if (warn) warn.hidden = false;
+      regenerate();
+      saveSoon();
+    }
+    if (tG) tG.addEventListener('change', saveGrade);
+    if (tS) tS.addEventListener('change', saveGrade);
+
     var btnHist = document.getElementById('btnHistory');
     if (btnHist) btnHist.addEventListener('click', openHistory);
 
@@ -6528,7 +6780,11 @@
     COURSE_SEED.forEach(function (c) {
       var s0 = PERIOD_TIME[c.a] || PERIOD_TIME[1];
       var s1 = PERIOD_TIME[c.b] || s0;
-      state.courses.push({ d: c.d, start: s0[0], end: s1[1], title: c.title, place: c.place });
+      state.courses.push({
+        id: 'c' + (++cid),
+        d: c.d, start: s0[0], end: s1[1], title: c.title, place: c.place,
+        weeks: c.weeks || { from: 1, to: 16, parity: 'all' }
+      });
       slotsForSpan(c.a, c.b).forEach(function (s) {
         var k = busyKey(c.d, s);
         if (state.busy.indexOf(k) === -1) state.busy.push(k);

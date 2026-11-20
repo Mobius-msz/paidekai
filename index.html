@@ -28,9 +28,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css?v=20261120S">
+<link rel="stylesheet" href="styles.css?v=20261120T">
 </head>
-<body data-build="20261120S">
+<body data-build="20261120T">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="#4F46E5"/>
@@ -411,6 +411,20 @@
     </div>
     <div class="stats" id="statsGrid"></div>
     <div class="term-row">
+      <label for="termGrade">年级</label>
+      <select class="term-sel" id="termGrade">
+        <option value="1">大一</option>
+        <option value="2">大二</option>
+        <option value="3">大三</option>
+        <option value="4">大四</option>
+      </select>
+      <select class="term-sel" id="termSem">
+        <option value="1">上学期</option>
+        <option value="2">下学期</option>
+      </select>
+      <span class="term-warn" id="termWarn" hidden>换学期后课表要重新导入</span>
+    </div>
+    <div class="term-row">
       <label for="termStart">开学第一天的周一</label>
       <input type="date" id="termStart">
       <span class="muted" id="termHint"></span>
@@ -535,7 +549,10 @@
         <h2 class="card-title">我有事</h2>
         <p class="card-sub">选中的格子会出现在日程里，排班时一定绕开</p>
         <div class="busy-grid" id="busyGrid"></div>
-        <button class="link-btn block-link" id="btnImportTable" type="button">从课表批量导入 →</button>
+        <div class="busy-actions">
+          <button class="link-btn" id="btnImportTable" type="button">从课表批量导入 →</button>
+          <button class="link-btn" id="btnCourse" type="button">管理课程 →</button>
+        </div>
       </section>
 
     </div>
@@ -617,6 +634,46 @@
 </main>
 
 
+
+<!-- 弹窗：课程表 -->
+<div class="modal" id="modalCourse" hidden>
+  <div class="modal-mask" data-close></div>
+  <div class="modal-card course-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>课程表</h3>
+        <p class="card-sub">单双周、自定义周数都在这儿改 —— 改完日程立刻重排</p>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+    </div>
+
+    <div class="cform">
+      <input class="cin" id="cfTitle" placeholder="课程名，比如 高等数学 A1" maxlength="24">
+      <select class="cin" id="cfDay">
+        <option value="0">周一</option><option value="1">周二</option><option value="2">周三</option>
+        <option value="3">周四</option><option value="4">周五</option><option value="5">周六</option><option value="6">周日</option>
+      </select>
+      <input class="cin" id="cfStart" type="time" value="08:40">
+      <span class="cdash">→</span>
+      <input class="cin" id="cfEnd" type="time" value="10:15">
+      <input class="cin cwide" id="cfPlace" placeholder="地点（可不填）" maxlength="20">
+      <input class="cin cnarrow" id="cfFrom" type="number" min="1" max="30" value="1">
+      <span class="cdash">—</span>
+      <input class="cin cnarrow" id="cfTo" type="number" min="1" max="30" value="16">
+      <span class="cunit">周</span>
+      <select class="cin" id="cfParity">
+        <option value="all">每周</option>
+        <option value="odd">单周</option>
+        <option value="even">双周</option>
+      </select>
+      <button class="btn primary sm" type="button" id="cfSave">加入</button>
+      <button class="link-btn" type="button" id="cfCancel" hidden>取消编辑</button>
+    </div>
+
+    <div class="clist" id="courseList"></div>
+    <p class="chint" id="courseHint"></p>
+  </div>
+</div>
 
 <!-- 弹窗：导入历史 -->
 <div class="modal" id="modalHistory" hidden>
@@ -1005,6 +1062,20 @@
         <button type="button" data-g="" class="gate-gender-skip">不方便说</button>
       </div>
 
+      <label class="gate-label">你现在读</label>
+      <div class="gate-term">
+        <select class="gate-sel" id="gateGrade">
+          <option value="1">大一</option>
+          <option value="2">大二</option>
+          <option value="3">大三</option>
+          <option value="4">大四</option>
+        </select>
+        <select class="gate-sel" id="gateSem">
+          <option value="1">上学期</option>
+          <option value="2">下学期</option>
+        </select>
+      </div>
+
       <label class="gate-label">挑个头像</label>
       <div class="gate-avs" id="gateAvs"></div>
 
@@ -1026,6 +1097,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120S"></script>
+<script src="app.js?v=20261120T"></script>
 </body>
 </html>
