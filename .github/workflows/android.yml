@@ -44,6 +44,11 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      - name: 生成安卓图标
+        run: |
+          npm i -D @capacitor/assets@3
+          npx capacitor-assets generate --android --iconBackgroundColor '#0D1017' --iconBackgroundColorDark '#0D1017' || echo '图标生成跳过'
+
       - name: 编译 APK
         run: |
           cd android
