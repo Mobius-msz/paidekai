@@ -237,7 +237,13 @@ a { color: var(--brand); }
 .mark span:first-child { width: 100%; opacity: .96; }
 .mark span:last-child { width: 58%; opacity: .66; }
 
-.brand-text h1 { font-size: 22px; font-weight: 900; line-height: 1.1; letter-spacing: -.015em; }
+.brand-text h1 {
+  font-family: "Source Han Sans SC Heavy", "Source Han Sans Heavy", "Noto Sans SC Black", "HarmonyOS Sans SC Black", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 24px; font-weight: 900; line-height: 1.08;
+  letter-spacing: -.03em;
+  -webkit-text-stroke: .35px currentColor;
+  paint-order: stroke fill;
+}
 .brand-text p { margin: 1px 0 0; font-size: 11.5px; color: var(--muted); letter-spacing: .01em; }
 
 .topbar-right { display: flex; align-items: center; gap: 9px; }
@@ -2158,7 +2164,11 @@ html[data-theme="dark"] .ghstar.on {
   .brand, .brand-text, .topbar-right { display: contents; }
 
   .mark { grid-row: 1; grid-column: 1; }
-  .brand-text h1 { grid-row: 1; grid-column: 2; align-self: center; font-size: 19px; font-weight: 900; letter-spacing: -.02em; margin: 0; }
+  .brand-text h1 {
+    grid-row: 1; grid-column: 2; align-self: center;
+    font-size: 21px; font-weight: 900; letter-spacing: -.03em; margin: 0;
+    -webkit-text-stroke: .3px currentColor;
+  }
   #btnMode { grid-row: 1; grid-column: 3; }
   #btnCopy { grid-row: 1; grid-column: 4; }
   #btnAdd  { grid-row: 1; grid-column: 5; }
