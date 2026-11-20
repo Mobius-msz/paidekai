@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120a5';
+  var BUILD = '20261121a1';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -6013,7 +6013,6 @@
           '<div class="ac-sub">' +
             '<button class="ac-gender" type="button" data-ac="gender" title="点击切换">' +
               genderText(u.gender) + '</button>' +
-            ' · ' + agoText(state.savedAt) + ' · 这台电脑上共 ' + store.users.length + ' 个档案' +
           '</div>' +
         '</div>' +
         '<div class="ac-act">' +
@@ -6751,12 +6750,19 @@
       : '切到正常模式会清空这个档案里的演示数据（课表、作业、活动、结算记录），变成空白，之后靠你自己导入。继续？';
     if (window.confirm && !window.confirm(msg)) return;
 
-    state.mode = mode;
-    seedData();
-    persist();
-    refreshAll();
-    gotoPage('home');
-    toast(toDemo ? '已切到演示模式' : '已切到正常模式 —— 去「数据」页导入你的课表');
+    try {
+      state.mode = mode;
+      seedData();
+      persist();
+      refreshAll();
+      gotoPage('home');
+      toast(toDemo ? '已切到演示模式' : '已切到正常模式 —— 去「数据」页导入你的课表');
+    } catch (err) {
+      // 兜底：切模式失败也别把页面搞崩
+      if (window.console) console.error('[排得开] 切模式失败：', err);
+      try { refreshAll(); } catch (e2) {}
+      toast('切换时出了点问题，已恢复');
+    }
   }
 
   // 铺一份完整的演示数据（新建档案、重置档案都走这里）

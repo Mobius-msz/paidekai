@@ -30,9 +30,9 @@
 <link rel="icon" href="favicon-64.png" sizes="64x64">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<link rel="stylesheet" href="styles.css?v=20261120a5">
+<link rel="stylesheet" href="styles.css?v=20261121a1">
 </head>
-<body data-build="20261120a5">
+<body data-build="20261121a1">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="#4F46E5"/>
@@ -213,8 +213,8 @@
   <section class="card settle-card" id="settleCard" hidden>
     <div class="card-head">
       <div>
-        <h2 class="card-title">待结算 <span class="settle-badge" id="settleCount"></span></h2>
-        <p class="card-sub">这些已经结束了 —— 去了还是没去？记一笔才算数</p>
+        <h2 class="card-title">已完结待确认 <span class="settle-badge" id="settleCount"></span></h2>
+        <p class="card-sub">去了还是没去？点一下才算数</p>
       </div>
     </div>
     <div class="settle-list" id="settleList"></div>
@@ -222,8 +222,7 @@
 
   <section class="card dayview">
     <div class="card-head">
-      <h2 class="card-title">这几天 <span class="muted" id="weekRange"></span>
-        <span class="term-chip" id="termChip"></span></h2>
+      <h2 class="card-title"><span class="term-chip as-title" id="termChip"></span> <span class="muted" id="weekRange"></span></h2>
       <div class="legend" id="legend"></div>
     </div>
     <div class="daystrip" id="daystrip"></div>
@@ -1099,6 +1098,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120a5"></script>
+<script src="app.js?v=20261121a1"></script>
 </body>
 </html>

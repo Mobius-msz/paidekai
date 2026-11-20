@@ -2182,3 +2182,20 @@ html[data-theme="dark"] .ghstar.on {
     padding: 6px 9px; font-size: 11.5px; border-radius: 9px; height: 30px;
   }
 }
+
+/* 周次直接做标题：去掉胶囊底，当标题用 */
+.term-chip.as-title {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--ink);
+  letter-spacing: -.02em;
+}
+/* 结算卡副标题别和标题挤在一起 */
+.settle .card-sub, #settleCard .card-sub {
+  margin-top: 2px;
+  line-height: 1.6;
+}
