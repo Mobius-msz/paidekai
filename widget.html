@@ -9,17 +9,17 @@
     try {
       var t = localStorage.getItem('paidekai.theme');
       if (t !== 'dark' && t !== 'light') {
-        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        t = 'dark';   // 默认深色
       }
       document.documentElement.setAttribute('data-theme', t);
     } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
   })();
 </script>
-<link rel="stylesheet" href="widget.css?v=20261120R">
+<link rel="stylesheet" href="widget.css?v=20261121a2">
 </head>
 <body>
 <div class="wg" id="app"></div>
-<script src="widget.js?v=20261120R"></script>
+<script src="widget.js?v=20261121a2"></script>
 <script>
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(function () {});
