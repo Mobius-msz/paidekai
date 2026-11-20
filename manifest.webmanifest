@@ -1,0 +1,20 @@
+{
+  "name": "排得开 · 校园日程排班器",
+  "short_name": "排得开",
+  "description": "课表、二课、志愿、阳光乐跑，四套系统排得开。",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0D1017",
+  "theme_color": "#4F46E5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "今天的日程", "url": "./index.html?pg=day" },
+    { "name": "二课活动", "url": "./index.html?pg=course" }
+  ]
+}

@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120Q';
+  var BUILD = '20261120R';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -6555,7 +6555,95 @@
     state.chosenIds = recommend().ids;
   }
 
+  /* ---------------- PWA：离线 + 安装 ---------------- */
+
+  var installEvt = null;
+
+  function isStandalone() {
+    try {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true;
+    } catch (e) { return false; }
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+
+  function renderInstall() {
+    var tip = document.getElementById('installTip');
+    var btn = document.getElementById('btnInstall');
+    if (!tip || !btn) return;
+
+    if (isStandalone()) {
+      tip.textContent = '已经装好了 —— 现在就是独立应用模式。';
+      btn.hidden = true;
+      return;
+    }
+    if (installEvt) {
+      tip.textContent = '装完就是一个独立应用：桌面有图标、打开全屏、断网也能用。';
+      btn.hidden = false;
+      return;
+    }
+    btn.hidden = true;
+    tip.textContent = isIOS()
+      ? 'iPhone / iPad：Safari 里点底部「分享」→「添加到主屏幕」。'
+      : '手机用 Chrome / Edge，电脑用 Chrome / Edge，地址栏右侧会出现「安装」图标；也可以直接点浏览器菜单里的「安装」或「添加到主屏幕」。';
+  }
+
+  // 手机上把导航移到 body 下：顶栏有 backdrop-filter，会变成 fixed 的定位容器
+  function placeNav() {
+    var nav = document.getElementById('nav');
+    var bar = document.querySelector('.topbar');
+    if (!nav || !bar) return;
+    var mobile = window.innerWidth <= 640;
+    if (mobile) {
+      if (nav.parentElement !== document.body) document.body.appendChild(nav);
+      nav.classList.add('tabbar');
+    } else {
+      if (nav.parentElement !== bar) bar.appendChild(nav);
+      nav.classList.remove('tabbar');
+    }
+  }
+
+  function setupPWA() {
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      installEvt = e;
+      renderInstall();
+    });
+
+    window.addEventListener('appinstalled', function () {
+      installEvt = null;
+      renderInstall();
+      toast('装好了，桌面找「排得开」');
+    });
+
+    var btn = document.getElementById('btnInstall');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (!installEvt) return;
+        installEvt.prompt();
+        installEvt.userChoice.then(function () {
+          installEvt = null;
+          renderInstall();
+        });
+      });
+    }
+
+    renderInstall();
+    placeNav();
+    window.addEventListener('resize', placeNav);
+
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () {});
+      });
+    }
+  }
+
   function init() {
+    setupPWA();
     loadVision();
 
     seedData();

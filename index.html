@@ -20,9 +20,17 @@
     }
   })();
 </script>
-<link rel="stylesheet" href="styles.css?v=20261120Q">
+<meta name="theme-color" content="#4F46E5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="排得开">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css?v=20261120R">
 </head>
-<body data-build="20261120Q">
+<body data-build="20261120R">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="#4F46E5"/>
@@ -385,6 +393,16 @@
   </section>
 
   <section class="card" id="profileCard2"></section>
+
+  <section class="card" id="installCard">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">装到手机上</h2>
+        <p class="card-sub" id="installTip">装完就是一个独立应用：桌面有图标、打开全屏、断网也能用</p>
+      </div>
+      <button class="btn primary sm" type="button" id="btnInstall" hidden>安装</button>
+    </div>
+  </section>
 
   <section class="card">
     <div class="card-head">
@@ -1008,6 +1026,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261120Q"></script>
+<script src="app.js?v=20261120R"></script>
 </body>
 </html>
