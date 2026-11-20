@@ -6,13 +6,19 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261120X';
+  var BUILD = '20261120Y';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
-      if (stamp && stamp !== BUILD && !sessionStorage.getItem('zbs.reloaded')) {
-        sessionStorage.setItem('zbs.reloaded', '1');
-        location.reload();
+      if (stamp && stamp !== BUILD) {
+        // HTML 是缓存的旧版：带上新参数重新取一次，绕过 10 分钟缓存
+        if (!sessionStorage.getItem('zbs.reloaded.' + BUILD)) {
+          sessionStorage.setItem('zbs.reloaded.' + BUILD, '1');
+          location.replace(location.pathname + '?_b=' + BUILD);
+        }
+      } else if (stamp) {
+        // 版本对上了，清掉标记
+        try { sessionStorage.removeItem('zbs.reloaded.' + BUILD); } catch (e) {}
       }
     } catch (e) { /* 忽略 */ }
   })();
