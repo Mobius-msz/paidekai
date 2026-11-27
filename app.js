@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261128c1';
+  var BUILD = '20261128d2';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
