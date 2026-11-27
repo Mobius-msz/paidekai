@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261128b1';
+  var BUILD = '20261128c1';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -6910,8 +6910,176 @@
     }
   }
 
+  /* ============================================================
+     附加模块：定位距离 / 图片灯箱 / 3D 校园入口
+     全部在 JS 里创建 DOM，index.html 不用改一行
+     ============================================================ */
+
+  var GEO_LAT = 30.3199, GEO_LNG = 120.3527;
+  var DIRS8 = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
+
+  function geoDistance(lat1, lon1, lat2, lon2) {
+    var R = 6371000, r = Math.PI / 180;
+    var dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+    var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  }
+
+  function geoBearing(lat1, lon1, lat2, lon2) {
+    var r = Math.PI / 180;
+    var y = Math.sin((lon2 - lon1) * r) * Math.cos(lat2 * r);
+    var x = Math.cos(lat1 * r) * Math.sin(lat2 * r) -
+            Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r);
+    return (Math.atan2(y, x) / r + 360) % 360;
+  }
+
+  var EXTRAS_CSS = [
+    '.zbs-fab{position:fixed;right:16px;z-index:60;width:52px;height:52px;border-radius:50%;',
+    'display:grid;place-items:center;cursor:pointer;font-family:inherit;',
+    'box-shadow:0 12px 26px -14px rgba(19,24,41,.55);transition:transform .16s ease}',
+    '.zbs-fab:hover{transform:translateY(-2px)}',
+    '.zbs-geo{background:linear-gradient(140deg,var(--brand),var(--accent));color:#fff;',
+    'border:0;font-size:12px;font-weight:800}',
+    '.zbs-c3d{background:var(--surface);color:var(--brand-ink);border:1px solid var(--line);',
+    'text-decoration:none;font-size:13px;font-weight:900}',
+    '@media(max-width:640px){.zbs-geo{bottom:calc(84px + env(safe-area-inset-bottom))}',
+    '.zbs-c3d{bottom:calc(144px + env(safe-area-inset-bottom))}}',
+    '@media(min-width:641px){.zbs-geo{bottom:28px}.zbs-c3d{bottom:88px}}',
+    '.zbs-mask{position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:16px}',
+    '.zbs-veil{position:absolute;inset:0;background:rgba(8,10,16,.72);backdrop-filter:blur(6px)}',
+    '.zbs-card{position:relative;width:min(420px,100%);background:var(--surface);',
+    'border:1px solid var(--line);border-radius:18px;padding:20px;',
+    'box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}',
+    '.zbs-k{margin:0;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}',
+    '.zbs-card h3{margin:3px 0 0;font-size:19px;font-weight:800;color:var(--ink)}',
+    '.zbs-addr{margin:12px 0 2px;font-size:12px;color:var(--ink-2);line-height:1.6}',
+    '.zbs-note{margin:0;font-size:10.5px;color:var(--muted)}',
+    '.zbs-body{margin:14px 0;padding:14px;border-radius:12px;background:var(--surface-2);',
+    'border:1px solid var(--line)}',
+    '.zbs-hint{margin:0;font-size:12px;color:var(--muted);line-height:1.7}',
+    '.zbs-num{font-size:28px;font-weight:900;letter-spacing:-.03em;color:var(--ink)}',
+    '.zbs-num small{font-size:13px;font-weight:700;margin-left:3px;color:var(--muted)}',
+    '.zbs-dir{margin-top:4px;font-size:12px;color:var(--brand-ink);font-weight:700}',
+    '.zbs-acts{display:flex;gap:8px;flex-wrap:wrap}',
+    '.zbs-ok{padding:8px 14px;border-radius:10px;border:0;background:var(--brand);color:#fff;',
+    'font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}',
+    '.zbs-ghost{padding:8px 14px;border-radius:10px;border:1px solid var(--line);',
+    'background:var(--surface-2);color:var(--brand-ink);font-size:12px;font-weight:700;',
+    'text-decoration:none;display:inline-block}',
+    '.zbs-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;',
+    'border:1px solid var(--line);background:var(--surface-2);cursor:pointer;color:var(--ink-2)}',
+    '.zbs-lb{position:fixed;inset:0;z-index:200;display:none;place-items:center;',
+    'background:rgba(8,10,16,.94);padding:20px}',
+    '.zbs-lb img{max-width:94vw;max-height:86vh;border-radius:12px;display:block}',
+    '.zbs-lb-x{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;',
+    'border:0;background:rgba(255,255,255,.16);color:#fff;font-size:15px;cursor:pointer}'
+  ].join('');
+
+  function setupExtras() {
+    if (document.getElementById('zbsExtras')) return;
+
+    var st = document.createElement('style');
+    st.id = 'zbsExtras';
+    st.textContent = EXTRAS_CSS;
+    document.head.appendChild(st);
+
+    /* ---- 3D 入口 ---- */
+    var c3d = document.createElement('a');
+    c3d.className = 'zbs-fab zbs-c3d';
+    c3d.href = 'campus.html';
+    c3d.textContent = '3D';
+    c3d.title = '3D 校园地图';
+    document.body.appendChild(c3d);
+
+    /* ---- 定位 ---- */
+    var geoBtn = document.createElement('button');
+    geoBtn.type = 'button';
+    geoBtn.className = 'zbs-fab zbs-geo';
+    geoBtn.textContent = '定位';
+    geoBtn.title = '算一下我离校区多远';
+    document.body.appendChild(geoBtn);
+
+    var mask = document.createElement('div');
+    mask.className = 'zbs-mask';
+    mask.innerHTML =
+      '<div class="zbs-veil"></div>' +
+      '<div class="zbs-card">' +
+        '<button class="zbs-x" type="button" aria-label="关闭">✕</button>' +
+        '<p class="zbs-k">Live location</p>' +
+        '<h3>我的位置</h3>' +
+        '<p class="zbs-addr">杭州电子科技大学 · 下沙校区 · 学源街 1158 号</p>' +
+        '<p class="zbs-note">只在本机计算，不上传</p>' +
+        '<div class="zbs-body"><p class="zbs-hint">点下面按钮，浏览器会问你要不要授权定位。</p></div>' +
+        '<div class="zbs-acts">' +
+          '<button class="zbs-ok" type="button">允许定位</button>' +
+          '<a class="zbs-ghost" target="_blank" rel="noopener" ' +
+            'href="https://uri.amap.com/marker?position=120.3527,30.3199">在高德打开</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(mask);
+
+    var body = mask.querySelector('.zbs-body');
+    var ok = mask.querySelector('.zbs-ok');
+
+    function closeGeo() { mask.style.display = 'none'; }
+    geoBtn.addEventListener('click', function () { mask.style.display = 'grid'; });
+    mask.querySelector('.zbs-x').addEventListener('click', closeGeo);
+    mask.querySelector('.zbs-veil').addEventListener('click', closeGeo);
+
+    ok.addEventListener('click', function () {
+      if (!navigator.geolocation) {
+        body.innerHTML = '<p class="zbs-hint">这个浏览器不支持定位。</p>';
+        return;
+      }
+      body.innerHTML = '<p class="zbs-hint">正在定位…</p>';
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var m = geoDistance(pos.coords.latitude, pos.coords.longitude, GEO_LAT, GEO_LNG);
+        var b = geoBearing(pos.coords.latitude, pos.coords.longitude, GEO_LAT, GEO_LNG);
+        var txt = m < 1000 ? Math.round(m) + '<small>米</small>'
+                           : (m / 1000).toFixed(1) + '<small>公里</small>';
+        body.innerHTML = '<div class="zbs-num">' + txt + '</div>' +
+          '<div class="zbs-dir">校区在你 ' + DIRS8[Math.round(b / 45) % 8] +
+          ' 方向 · 方位角 ' + Math.round(b) + '°</div>' +
+          '<p class="zbs-hint" style="margin-top:8px">定位精度约 ' +
+          Math.round(pos.coords.accuracy || 0) + ' 米</p>';
+        ok.textContent = '重新定位';
+      }, function () {
+        body.innerHTML = '<p class="zbs-hint">定位被拒绝或失败 —— 可以点「在高德打开」手动看路线。</p>';
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    });
+
+    /* ---- 灯箱 ---- */
+    var lb = document.createElement('div');
+    lb.className = 'zbs-lb';
+    lb.innerHTML = '<button class="zbs-lb-x" type="button" aria-label="关闭">✕</button><img alt="">';
+    document.body.appendChild(lb);
+    var lbImg = lb.querySelector('img');
+
+    function closeLb() { lb.style.display = 'none'; lbImg.removeAttribute('src'); }
+    lb.addEventListener('click', function (e) {
+      if (e.target !== lbImg) closeLb();
+    });
+
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || t.tagName !== 'IMG') return;
+      if (t.closest('.zbs-lb') || t.closest('a')) return;
+      if ((t.naturalWidth || 0) < 400) return;
+      lbImg.src = t.currentSrc || t.src;
+      lb.style.display = 'grid';
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      closeGeo();
+      closeLb();
+    });
+  }
+
   function init() {
     setupPWA();
+    setupExtras();
     loadVision();
 
     seedData();
