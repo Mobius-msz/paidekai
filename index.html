@@ -30,9 +30,9 @@
 <link rel="icon" href="favicon-64.png" sizes="64x64">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<link rel="stylesheet" href="styles.css?v=20261121a2">
+<link rel="stylesheet" href="styles.css?v=20261127a1">
 </head>
-<body data-build="20261121a2">
+<body data-build="20261127a1">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0%" stop-color="#4F46E5"/>
@@ -1098,6 +1098,146 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261121a2"></script>
+<script src="app.js?v=20261127a1"></script>
+<!-- ============ 附加模块：定位 / 灯箱 ============ -->
+<div class="geo-fab" id="geoFab" role="button" tabindex="0" aria-label="定位到校区">
+  <span class="geo-fab-txt">定位</span>
+</div>
+
+<div class="geo-modal" id="geoModal" hidden>
+  <div class="geo-mask" data-geo-close></div>
+  <div class="geo-card">
+    <div class="geo-head">
+      <div>
+        <p class="geo-kicker">Live location</p>
+        <h3>我的位置</h3>
+      </div>
+      <button class="icon-btn" type="button" data-geo-close aria-label="关闭">✕</button>
+    </div>
+    <p class="geo-addr">杭州电子科技大学 · 下沙校区 · 学源街 1158 号</p>
+    <p class="geo-note">只在本机计算，不上传</p>
+    <div class="geo-body" id="geoBody">
+      <p class="geo-hint">点下面按钮，浏览器会问你要不要授权定位。</p>
+    </div>
+    <div class="geo-acts">
+      <button class="btn primary sm" type="button" id="geoAllow">允许定位</button>
+      <a class="btn ghost sm" id="geoNav" target="_blank" rel="noopener"
+         href="https://uri.amap.com/marker?position=120.3527,30.3199&name=杭州电子科技大学下沙校区">在高德打开</a>
+    </div>
+  </div>
+</div>
+
+<div class="lbox" id="lbox" hidden>
+  <img class="lbox-img" id="lboxImg" alt="">
+  <button class="lbox-close" type="button" data-lbox-close aria-label="关闭">✕</button>
+</div>
+
+<style>
+.geo-fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;
+  width:54px;height:54px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:linear-gradient(140deg,var(--brand),var(--accent));color:#fff;font-size:12px;font-weight:800;
+  box-shadow:0 12px 28px -12px rgba(79,70,229,.9);transition:transform .16s ease}
+.geo-fab:hover{transform:translateY(-2px)}
+@media(min-width:641px){.geo-fab{bottom:28px}}
+.geo-modal{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:16px}
+.geo-mask{position:absolute;inset:0;background:rgba(17,21,34,.5);backdrop-filter:blur(4px)}
+.geo-card{position:relative;width:min(420px,100%);background:var(--surface);border:1px solid var(--line);
+  border-radius:18px;padding:20px;box-shadow:0 24px 60px -30px rgba(19,24,41,.6)}
+.geo-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.geo-kicker{margin:0;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.geo-head h3{margin:2px 0 0;font-size:19px;font-weight:800}
+.geo-addr{margin:12px 0 2px;font-size:12px;color:var(--ink-2);line-height:1.6}
+.geo-note{margin:0;font-size:10.5px;color:var(--muted)}
+.geo-body{margin:14px 0;padding:14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.geo-hint{margin:0;font-size:12px;color:var(--muted);line-height:1.7}
+.geo-num{font-size:28px;font-weight:900;letter-spacing:-.03em}
+.geo-num small{font-size:13px;font-weight:700;margin-left:3px;color:var(--muted)}
+.geo-dir{margin-top:4px;font-size:12px;color:var(--brand-ink);font-weight:700}
+.geo-acts{display:flex;gap:8px;flex-wrap:wrap}
+.geo-acts a{text-decoration:none}
+.lbox{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:rgba(10,12,18,.92);padding:20px}
+.lbox-img{max-width:94vw;max-height:88vh;border-radius:12px;box-shadow:0 30px 80px -30px #000}
+.lbox-close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;
+  background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer}
+</style>
+
+<script>
+(function () {
+  var LAT = 30.3199, LNG = 120.3527;   // 杭电下沙校区
+
+  var fab = document.getElementById('geoFab');
+  var modal = document.getElementById('geoModal');
+  var body = document.getElementById('geoBody');
+  var allow = document.getElementById('geoAllow');
+
+  fab.addEventListener('click', function () { modal.hidden = false; });
+  modal.addEventListener('click', function (e) {
+    if (e.target.closest('[data-geo-close]')) modal.hidden = true;
+  });
+
+  function dist(lat1, lon1, lat2, lon2) {
+    var R = 6371000, r = Math.PI / 180;
+    var dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function bearing(lat1, lon1, lat2, lon2) {
+    var r = Math.PI / 180;
+    var y = Math.sin((lon2 - lon1) * r) * Math.cos(lat2 * r);
+    var x = Math.cos(lat1 * r) * Math.sin(lat2 * r) -
+            Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r);
+    return (Math.atan2(y, x) / r + 360) % 360;
+  }
+
+  var DIRS = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
+  function dirText(deg) {
+    var i = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+    return DIRS[i];
+  }
+
+  function show(lat, lng, acc) {
+    var m = dist(lat, lng, LAT, LNG);
+    var b = bearing(lat, lng, LAT, LNG);
+    var txt = m < 1000 ? Math.round(m) + '<small>米</small>'
+                       : (m / 1000).toFixed(1) + '<small>公里</small>';
+    body.innerHTML = '<div class="geo-num">' + txt + '</div>' +
+      '<div class="geo-dir">校区在你 ' + dirText(b) + ' 方向 · 方位角 ' + Math.round(b) + '°</div>' +
+      '<p class="geo-hint" style="margin-top:8px">定位精度约 ' + Math.round(acc || 0) + ' 米</p>';
+    allow.textContent = '重新定位';
+  }
+
+  allow.addEventListener('click', function () {
+    if (!navigator.geolocation) {
+      body.innerHTML = '<p class="geo-hint">这个浏览器不支持定位。</p>';
+      return;
+    }
+    body.innerHTML = '<p class="geo-hint">正在定位…</p>';
+    navigator.geolocation.getCurrentPosition(function (p) {
+      show(p.coords.latitude, p.coords.longitude, p.coords.accuracy);
+    }, function () {
+      body.innerHTML = '<p class="geo-hint">定位被拒绝或失败 —— 可以点「在高德打开」手动看路线。</p>';
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  });
+
+  /* ---- 图片灯箱：点任意大图放大 ---- */
+  var lb = document.getElementById('lbox');
+  var lbImg = document.getElementById('lboxImg');
+  document.addEventListener('click', function (e) {
+    var img = e.target.closest('img');
+    if (!img || img === lbImg) return;
+    if (img.closest('.lbox')) return;
+    var w = img.naturalWidth || 0;
+    if (w && w < 400) return;           // 小图标不放大
+    lbImg.src = img.src;
+    lb.hidden = false;
+  });
+  lb.addEventListener('click', function () { lb.hidden = true; });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { lb.hidden = true; modal.hidden = true; }
+  });
+})();
+</script>
 </body>
 </html>
