@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>3D 校园 · 排得开</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e15; color: #e9edf6;
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  canvas { display: block; }
+
+  .bar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center;
+    gap: 12px; padding: 14px 16px; background: linear-gradient(#0b0e15cc, transparent); }
+  .bar a { color: #aeb8ff; text-decoration: none; font-size: 13px; font-weight: 700; }
+  .bar h1 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+  .bar p { margin: 2px 0 0; font-size: 11px; color: #8b94a8; }
+  .bar .sp { flex: 1; }
+  .hint { font-size: 11px; color: #8b94a8; }
+
+  .panel { position: fixed; left: 16px; bottom: 16px; z-index: 10; width: min(320px, calc(100vw - 32px));
+    padding: 16px; border-radius: 16px; background: #161a23ee; border: 1px solid #262c39;
+    box-shadow: 0 24px 60px -30px #000; backdrop-filter: blur(10px); }
+  .panel .k { margin: 0; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #8b94a8; }
+  .panel h2 { margin: 3px 0 6px; font-size: 18px; font-weight: 800; }
+  .panel p { margin: 0; font-size: 12px; line-height: 1.7; color: #b9c1d2; }
+  .panel .tag { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 6px;
+    font-size: 10px; font-weight: 800; background: #1e2440; color: #aeb8ff; }
+
+  .loading { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
+    background: #0b0e15; font-size: 13px; color: #8b94a8; text-align: center; line-height: 2; }
+  .loading b { color: #e9edf6; font-size: 15px; display: block; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading"><div><b>正在搭建校园</b>地块几何体加载中…</div></div>
+
+<div class="bar">
+  <div>
+    <h1>3D 校园</h1>
+    <p>杭州电子科技大学 · 下沙校区</p>
+  </div>
+  <div class="sp"></div>
+  <span class="hint">拖拽旋转 · 滚轮缩放 · 点楼看介绍</span>
+  <a href="index.html">← 回排得开</a>
+</div>
+
+<div class="panel" id="panel">
+  <p class="k">CAMPUS MAP</p>
+  <h2 id="pName">点一栋楼</h2>
+  <p id="pDesc">这些方块是按校园大致布局拼的示意模型，不对应真实尺寸。</p>
+  <span class="tag" id="pTag">示意</span>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const W = window.innerWidth, H = window.innerHeight;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0e15);
+scene.fog = new THREE.Fog(0x0b0e15, 60, 165);
+
+const camera = new THREE.PerspectiveCamera(45, W / H, 0.5, 500);
+camera.position.set(42, 40, 52);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI * 0.46;
+controls.minDistance = 18;
+controls.maxDistance = 130;
+controls.target.set(0, 0, 0);
+
+/* ---------------- 灯光 ---------------- */
+scene.add(new THREE.HemisphereLight(0xaeb8ff, 0x0b0e15, 0.85));
+
+const sun = new THREE.DirectionalLight(0xfff2dd, 1.5);
+sun.position.set(38, 62, 26);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -70; sun.shadow.camera.right = 70;
+sun.shadow.camera.top = 70; sun.shadow.camera.bottom = -70;
+sun.shadow.camera.far = 200;
+scene.add(sun);
+
+const rim = new THREE.DirectionalLight(0x6d66f0, 0.5);
+rim.position.set(-40, 30, -30);
+scene.add(rim);
+
+/* ---------------- 地面 + 网格 ---------------- */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(220, 220),
+  new THREE.MeshStandardMaterial({ color: 0x141821, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(220, 44, 0x262c39, 0x1b2029);
+grid.position.y = 0.01;
+scene.add(grid);
+
+/* ---------------- 楼群 ---------------- */
+const PALETTE = [0x2a3050, 0x333a5c, 0x272d45, 0x3a4166, 0x2f3552];
+const WIN = 0x7c8bff;
+
+const BUILDINGS = [
+  { x: 0,    z: -6,  w: 22, d: 14, h: 16, name: '图书馆',   desc: '校园正中心，自习与借书都在这儿。八楼以上视野最好。', tag: '核心' },
+  { x: -26,  z: 6,   w: 16, d: 11, h: 12, name: '第三教学楼', desc: '大部分专业课在这栋。上午 1-2 节人最多，电梯要等。', tag: '上课' },
+  { x: -26,  z: -14, w: 14, d: 10, h: 11, name: '正心楼',   desc: '公共课集中地，跨楼转场要走 8 分钟，别排太紧。', tag: '上课' },
+  { x: 26,   z: 4,   w: 18, d: 13, h: 13, name: '行政楼',   desc: '办证明、交材料、盖章。工作日 8:30-16:30。', tag: '办事' },
+  { x: 27,   z: -18, w: 15, d: 15, h: 18, name: '大学生活动中心', desc: '二课活动、宣讲会、社团招新大多在这儿。', tag: '活动' },
+  { x: -6,   z: 34,  w: 26, d: 16, h: 10, name: '体育馆',   desc: '体育课和校队训练。旁边就是跑道。', tag: '体育' },
+  { x: 34,   z: 30,  w: 30, d: 22, h: 3,  name: '东田径场', desc: '阳光乐跑刷脸点，07:00–21:00 开放。', tag: '乐跑', flat: true },
+  { x: -34,  z: 34,  w: 18, d: 12, h: 9,  name: '第一食堂', desc: '中午 12:00 前后最挤，错峰十分钟差别很大。', tag: '吃饭' },
+  { x: 4,    z: 12,  w: 12, d: 8,  h: 8,  name: '科技馆',   desc: '竞赛宣讲、创客空间。周末也开门。', tag: '活动' }
+];
+
+const pickable = [];
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function makeBuilding(b, i) {
+  const g = new THREE.Group();
+
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(b.w, b.h, b.d),
+    new THREE.MeshStandardMaterial({
+      color: PALETTE[i % PALETTE.length],
+      roughness: 0.75,
+      metalness: 0.12
+    })
+  );
+  base.position.y = b.h / 2;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  g.add(base);
+
+  // 窗格：用细长发光条代替逐窗建模，省算力
+  if (!b.flat) {
+    const rows = Math.max(2, Math.floor(b.h / 4));
+    for (let r = 1; r <= rows; r++) {
+      const y = (b.h / (rows + 1)) * r;
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(b.w * 0.86, 0.5, 0.12),
+        new THREE.MeshBasicMaterial({ color: WIN, transparent: true, opacity: 0.34 })
+      );
+      strip.position.set(0, y, b.d / 2 + 0.02);
+      g.add(strip);
+
+      const strip2 = strip.clone();
+      strip2.position.z = -b.d / 2 - 0.02;
+      g.add(strip2);
+    }
+    // 楼顶小灯
+    const cap = new THREE.Mesh(
+      new THREE.BoxGeometry(b.w * 0.5, 0.4, b.d * 0.5),
+      new THREE.MeshBasicMaterial({ color: 0x8a96ff, transparent: true, opacity: 0.5 })
+    );
+    cap.position.y = b.h + 0.3;
+    g.add(cap);
+  } else {
+    base.material.color.set(0x1d3a33);
+    // 跑道
+    const track = new THREE.Mesh(
+      new THREE.RingGeometry(6, 9, 48),
+      new THREE.MeshStandardMaterial({ color: 0x8a4a3a, roughness: 1, side: THREE.DoubleSide })
+    );
+    track.rotation.x = -Math.PI / 2;
+    track.position.y = b.h + 0.06;
+    g.add(track);
+  }
+
+  g.position.set(b.x, 0, b.z);
+  g.userData = b;
+  scene.add(g);
+  pickable.push(base);
+
+  // 地面投影圆
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(Math.max(b.w, b.d) * 0.72, 40),
+    new THREE.MeshBasicMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.06 })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.set(b.x, 0.02, b.z);
+  scene.add(pad);
+
+  return g;
+}
+
+BUILDINGS.forEach(makeBuilding);
+
+/* ---------------- 点击拾取 ---------------- */
+const panel = document.getElementById('panel');
+const pName = document.getElementById('pName');
+const pDesc = document.getElementById('pDesc');
+const pTag = document.getElementById('pTag');
+
+function onPick(ev) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(pickable, false)[0];
+  if (!hit) return;
+  const b = hit.object.parent.userData;
+  pName.textContent = b.name;
+  pDesc.textContent = b.desc;
+  pTag.textContent = b.tag;
+
+  // 镜头轻推向被点的楼
+  const target = new THREE.Vector3(b.x, 4, b.z);
+  controls.target.copy(target);
+}
+
+renderer.domElement.addEventListener('click', onPick);
+
+/* ---------------- 渲染循环 ---------------- */
+let t = 0;
+function tick() {
+  requestAnimationFrame(tick);
+  t += 0.004;
+  // 极轻微的呼吸感，避免画面死板
+  sun.position.x = 38 + Math.sin(t) * 6;
+  controls.update();
+  renderer.render(scene, camera);
+}
+tick();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+document.getElementById('loading').style.display = 'none';
+</script>
+
+<script>
+// WebGL / CDN 失败时给一句人话
+setTimeout(function () {
+  var l = document.getElementById('loading');
+  if (l && l.style.display !== 'none') {
+    l.innerHTML = '<div><b>3D 地图没能加载</b>可能是网络拿不到 three.js，或者浏览器不支持 WebGL。<br>功能不受影响，回主站继续用就好。<br><br><a href="index.html" style="color:#aeb8ff">← 回排得开</a></div>';
+  }
+}, 8000);
+</script>
+</body>
+</html>
