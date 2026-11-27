@@ -30,7 +30,7 @@
 <link rel="icon" href="favicon-64.png" sizes="64x64">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-<link rel="stylesheet" href="styles.css?v=20261127a1">
+<link rel="stylesheet" href="styles.css?v=20261127a2">
 </head>
 <body data-build="20261127a1">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1098,8 +1098,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=20261127a1"></script>
+<script src="app.js?v=20261127a2"></script>
 <!-- ============ 附加模块：定位 / 灯箱 ============ -->
+<a class="campus-fab" href="campus.html" title="3D 校园地图">3D</a>
+
 <div class="geo-fab" id="geoFab" role="button" tabindex="0" aria-label="定位到校区">
   <span class="geo-fab-txt">定位</span>
 </div>
@@ -1159,6 +1161,10 @@
 .lbox-img{max-width:94vw;max-height:88vh;border-radius:12px;box-shadow:0 30px 80px -30px #000}
 .lbox-close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;
   background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer}
+
+.campus-fab{position:fixed;right:16px;bottom:calc(146px + env(safe-area-inset-bottom));z-index:60;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;text-decoration:none;background:var(--surface);border:1px solid var(--line);color:var(--brand-ink);font-size:13px;font-weight:900;box-shadow:0 10px 24px -14px rgba(19,24,41,.5)}
+.campus-fab:hover{border-color:var(--line-brand)}
+@media(min-width:641px){.campus-fab{bottom:90px}}
 </style>
 
 <script>
