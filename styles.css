@@ -2283,3 +2283,34 @@ html[data-theme="dark"] .hero-title {
 @media (prefers-reduced-motion: reduce) {
   .btn.primary.lg::after { animation: none; }
 }
+
+/* ---- 标题改回黑体 ---- */
+.hero-title {
+  font-family: inherit;
+  font-size: clamp(50px, 8.5vw, 88px);
+  font-weight: 900;
+  letter-spacing: -.045em;
+  line-height: 1.02;
+  color: var(--ink);
+}
+html[data-theme="dark"] .hero-title {
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  color: #ffffff;
+}
+
+/* ---- 颗粒噪点 ---- */
+.hero::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: .16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+html[data-theme="dark"] .hero::after { opacity: .22; }
+@media (prefers-reduced-motion: reduce) {
+  .hero::after { display: none; }
+}
