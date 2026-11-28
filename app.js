@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261128e1';
+  var BUILD = '20261128f1';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -6972,6 +6972,7 @@
     '.zbs-lb{position:fixed;inset:0;z-index:200;display:none;place-items:center;',
     'background:rgba(8,10,16,.94);padding:20px}',
     '.zbs-lb img{max-width:94vw;max-height:86vh;border-radius:12px;display:block}',
+    '.nv-ext{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}',
     '.zbs-lb-x{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;',
     'border:0;background:rgba(255,255,255,.16);color:#fff;font-size:15px;cursor:pointer}'
   ].join('');
@@ -6987,9 +6988,24 @@
     /* ---- 3D 入口 ---- */
     var c3d = document.createElement('a');
     c3d.className = 'zbs-fab zbs-c3d';
-    c3d.href = 'campus.html';
+    c3d.href = 'https://17705807717.github.io/2026hduLeon/';
+    c3d.target = '_blank';
+    c3d.rel = 'noopener';
     c3d.textContent = '3D';
-    c3d.title = '3D 校园地图';
+    c3d.title = '3D 校园地图（新窗口打开）';
+
+    // 2) 导航栏也放一项
+    var nav = document.getElementById('nav');
+    if (nav && !document.getElementById('nav3d')) {
+      var nv = document.createElement('a');
+      nv.className = 'nv nv-ext';
+      nv.id = 'nav3d';
+      nv.href = 'https://17705807717.github.io/2026hduLeon/';
+      nv.target = '_blank';
+      nv.rel = 'noopener';
+      nv.textContent = '3D 校园';
+      nav.appendChild(nv);
+    }
     document.body.appendChild(c3d);
 
     /* ---- 定位 ---- */
