@@ -6,7 +6,7 @@
   'use strict';
 
   /* ---- 构建一致性检查：HTML 缓存比脚本旧时，自动重载一次 ---- */
-  var BUILD = '20261128g1';
+  var BUILD = '20261128g2';
   (function () {
     try {
       var stamp = document.body && document.body.getAttribute('data-build');
@@ -6873,9 +6873,11 @@
       nav.classList.remove('tabbar');
     }
 
-    // 3D 入口：手机上缩成两个字，桌面上写全
+    // 手机上标签栏位置紧：长名字缩成两字
     var n3 = document.getElementById('nav3d');
     if (n3) n3.textContent = mobile ? '3D' : '3D 校园';
+    var nRun = nav.querySelector('.nv[data-page="run"]');
+    if (nRun) nRun.textContent = mobile ? '乐跑' : '阳光乐跑';
   }
 
   function setupPWA() {
