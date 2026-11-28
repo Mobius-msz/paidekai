@@ -7007,7 +7007,7 @@
       nv.href = 'https://17705807717.github.io/2026hduLeon/';
       nv.target = '_blank';
       nv.rel = 'noopener';
-      nv.textContent = '3D 校园';
+      nv.textContent = (window.innerWidth <= 640) ? '3D' : '3D 校园';
       nav.appendChild(nv);
     }
     document.body.appendChild(c3d);
